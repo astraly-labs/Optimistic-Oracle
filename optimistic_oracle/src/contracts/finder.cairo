@@ -1,9 +1,9 @@
 #[starknet::contract]
 pub mod finder {
     use core::starknet::event::EventEmitter;
-use optimistic_oracle::contracts::interfaces::IFinder;
+    use optimistic_oracle::contracts::interfaces::IFinder;
     use openzeppelin::access::ownable::OwnableComponent;
-    use starknet::{ContractAddress,contract_address_const};
+    use starknet::{ContractAddress, contract_address_const};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -11,17 +11,17 @@ use optimistic_oracle::contracts::interfaces::IFinder;
 
 
     #[storage]
-    struct Storage{
+    struct Storage {
         interface_implemented: LegacyMap::<felt252, ContractAddress>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
     }
 
-    
+
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        InterfaceImplementationChanged:InterfaceImplementationChanged,
+        InterfaceImplementationChanged: InterfaceImplementationChanged,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
     }
@@ -33,7 +33,7 @@ use optimistic_oracle::contracts::interfaces::IFinder;
 
     #[derive(starknet::Event, Drop)]
     pub struct InterfaceImplementationChanged {
-        pub interface_name: felt252, 
+        pub interface_name: felt252,
         pub new_implementation_address: ContractAddress,
     }
 
@@ -44,24 +44,31 @@ use optimistic_oracle::contracts::interfaces::IFinder;
 
     #[abi(embed_v0)]
     impl IFinderImpl of IFinder<ContractState> {
-        fn change_implementation_address(ref self: ContractState, interface_name: felt252, implementation_address:ContractAddress){
+        fn change_implementation_address(
+            ref self: ContractState,
+            interface_name: felt252,
+            implementation_address: ContractAddress
+        ) {
             self.ownable.assert_only_owner();
             self.interface_implemented.write(interface_name, implementation_address);
-            self.emit(
-                InterfaceImplementationChanged{
-                    interface_name: interface_name, 
-                    new_implementation_address: implementation_address,
-                }
-            );
+            self
+                .emit(
+                    InterfaceImplementationChanged {
+                        interface_name: interface_name,
+                        new_implementation_address: implementation_address,
+                    }
+                );
         }
 
-        fn get_implementation_address(self: @ContractState, interface_name: felt252) -> ContractAddress {
+        fn get_implementation_address(
+            self: @ContractState, interface_name: felt252
+        ) -> ContractAddress {
             let implementation_address = self.interface_implemented.read(interface_name);
-            assert(implementation_address !=contract_address_const::<0>(), Errors::IMPLEMENTATION_NOT_FOUND);
+            assert(
+                implementation_address != contract_address_const::<0>(),
+                Errors::IMPLEMENTATION_NOT_FOUND
+            );
             implementation_address
         }
-
-
     }
-
 }
