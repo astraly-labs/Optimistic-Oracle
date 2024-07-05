@@ -1,0 +1,32 @@
+name: contracts-tests
+on:
+  push:
+  pull_request:
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: ./optimistic_oracle
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: software-mansion/setup-scarb@v1
+      - uses: foundry-rs/setup-snfoundry@v3
+        with:
+          starknet-foundry-version: '0.22.0'
+      - working-directory: ${{ env.working-directory}}
+        run: scarb fmt --check
+
+      - name: Cache contracts
+        id: cache-contracts
+        uses: actions/cache@v3
+        with:
+          path: ./target
+          key: ${{ runner.os }}-contracts-${{ hashFiles('./src', 'Scarb.lock') }}
+
+      - working-directory: ${{ env.working-directory}}
+        run: scarb build
+      - working-directory: ${{ env.working-directory}}
+        run: snforge test
+
