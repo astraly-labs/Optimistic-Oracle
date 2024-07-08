@@ -1,7 +1,9 @@
 use core::byte_array::{ByteArray, ByteArrayTrait};
 use starknet::ContractAddress;
 use openzeppelin::token::erc20::interface::ERC20ABIDispatcher;
-
+use optimistic_oracle::contracts::mocks::oracle_ancillary::mock_oracle_ancillary::{
+    QueryPoint, QueryIndex
+};
 
 #[derive(starknet::Store, Drop, Serde)]
 pub struct EscalationManagerSettings {
@@ -60,6 +62,10 @@ pub trait IOptimisticOracle<TContractState> {
         identifier: felt252,
         domain_id: u256
     ) -> felt252;
+
+    fn dispute_assertion(
+        ref self: TContractState, assertion_id: felt252, disputer: ContractAddress
+    );
 }
 #[starknet::interface]
 pub trait IFinder<TContractState> {
@@ -85,9 +91,9 @@ pub trait IIdentifierWhitelist<TContractState> {
 pub trait IAddressWhitelist<TContractState> {
     fn add_to_whitelist(ref self: TContractState, new_element: ContractAddress);
 
-    fn remove_to_whitelist(ref self: TContractState, new_element: ContractAddress);
+    fn remove_from_whitelist(ref self: TContractState, element_to_remove: ContractAddress);
 
-    fn is_on_whitelist(self: @TContractState, new_element: ContractAddress) -> bool;
+    fn is_on_whitelist(self: @TContractState, element_to_check: ContractAddress) -> bool;
 
     fn get_whitelist(self: @TContractState) -> Span<ContractAddress>;
 }
@@ -108,7 +114,7 @@ pub trait IEscalationManager<TContractState> {
     fn get_assertion_policy(self: @TContractState, assertion_id: felt252) -> AssertionPolicy;
 
     fn is_dispute_allowed(
-        self: @TContractState, assertion_id: u256, dispute_caller: ContractAddress
+        self: @TContractState, assertion_id: felt252, dispute_caller: ContractAddress
     ) -> bool;
 
     fn get_price(
@@ -119,3 +125,56 @@ pub trait IEscalationManager<TContractState> {
         ref self: TContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
     );
 }
+
+
+#[starknet::interface]
+pub trait IOracleAncillary<TContractState> {
+    fn request_price(
+        ref self: TContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
+    );
+
+    fn has_price(
+        self: @TContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
+    ) -> bool;
+
+    fn get_price(
+        self: @TContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
+    ) -> u256;
+}
+
+#[starknet::interface]
+pub trait IAssertionCallback<TContractState> {
+    fn assertion_resolved_callback(
+        self: @TContractState, assertion_id: felt252, asserted_truthfully: bool
+    );
+
+    fn assertion_disputed_callback(self: @TContractState, assertion_id: felt252);
+}
+
+
+#[starknet::interface]
+pub trait IDisputeCallerConfiguration<TContractState> {
+    fn set_dispute_caller_in_whitelist(
+        ref self: TContractState, dispute_caller: ContractAddress, value: bool
+    );
+}
+
+#[starknet::interface]
+pub trait IMockOracleAncillaryConfiguration<TContractState> {
+    fn get_identifier_whitelist(self: @TContractState) -> IIdentifierWhitelistDispatcher;
+
+    fn push_price(
+        ref self: TContractState,
+        identifier: felt252,
+        time: u256,
+        ancillary_data: ByteArray,
+        price: u256
+    );
+
+    fn push_price_by_request_id(ref self: TContractState, request_id: felt252, price: u256);
+
+    fn get_pending_queries(self: @TContractState) -> Span<QueryPoint>;
+
+    fn get_request_parameters(self: @TContractState, request_id: felt252) -> QueryPoint;
+}
+
