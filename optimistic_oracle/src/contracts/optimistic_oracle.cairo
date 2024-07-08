@@ -6,13 +6,17 @@ pub mod optimistic_oracle {
         IIdentifierWhitelistDispatcher, IIdentifierWhitelistDispatcherTrait,
         IAddressWhitelistDispatcher, IAddressWhitelistDispatcherTrait, IStoreDispatcher,
         IStoreDispatcherTrait, Assertion, EscalationManagerSettings, AssertionPolicy,
-        IEscalationManagerDispatcher, IEscalationManagerDispatcherTrait,
+        IEscalationManagerDispatcher, IEscalationManagerDispatcherTrait, IOracleAncillaryDispatcher,
+        IOracleAncillaryDispatcherTrait
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use alexandria_math::pow;
     use optimistic_oracle::contracts::utils::constants::{OracleInterfaces, PROTOCOL_DECIMALS};
+    use optimistic_oracle::contracts::utils::ancillary_data::ancillary_data::{
+        append_key_value_address, append_key_value_bytes_32, append_key_value_felt252
+    };
     use openzeppelin::security::reentrancyguard::{
         ReentrancyGuardComponent,
         ReentrancyGuardComponent::InternalTrait as InternalReentrancyGuardImpl
@@ -39,7 +43,7 @@ pub mod optimistic_oracle {
         burned_bond_percentage: u256,
         default_liveness: u64,
         default_currency: ERC20ABIDispatcher,
-        cache_oracle: ContractAddress, // to replace with actual dispatcher
+        cached_oracle: ContractAddress, // to replace with actual dispatcher
         cached_currencies: LegacyMap::<ContractAddress, WhitelistedCurrency>,
         cached_identifiers: LegacyMap::<felt252, bool>,
         assertions: LegacyMap::<felt252, Assertion>,
@@ -61,6 +65,11 @@ pub mod optimistic_oracle {
         pub const UNSUPPORTED_CURRENCY: felt252 = 'Unsupported currency';
         pub const BOND_AMOUNT_TOO_LOW: felt252 = 'Bond amount too low';
         pub const ASSERTION_NOT_ALLOWED: felt252 = 'Assertion not allowed';
+        pub const DISPUTER_CANNOT_BE_ZERO: felt252 = 'Disputer cannot be 0';
+        pub const ASSERTION_DOES_NOT_EXIST: felt252 = 'Assertion does not exist';
+        pub const ASSERTION_ALREADY_DISPUTED: felt252 = 'Assertion already disputed';
+        pub const ASSERTION_IS_EXPIRED: felt252 = 'Assertion is expired';
+        pub const DISPUTE_NOT_ALLOWED: felt252 = 'Dispute not allowed';
     }
 
     #[event]
@@ -227,6 +236,36 @@ pub mod optimistic_oracle {
 
             assertion_id
         }
+
+        fn dispute_assertion(
+            ref self: ContractState, assertion_id: felt252, disputer: ContractAddress
+        ) {
+            self.reentrancy_guard.start();
+
+            assert(disputer != contract_address_const::<0>(), Errors::DISPUTER_CANNOT_BE_ZERO);
+            let assertion = self.assertions.read(assertion_id);
+            assert(
+                assertion.asserter != contract_address_const::<0>(),
+                Errors::ASSERTION_DOES_NOT_EXIST
+            );
+            assert(
+                assertion.disputer == contract_address_const::<0>(),
+                Errors::ASSERTION_ALREADY_DISPUTED
+            );
+            assert(
+                assertion.expiration_time > starknet::get_block_timestamp(),
+                Errors::ASSERTION_IS_EXPIRED
+            );
+            assert(self.is_dispute_allowed(assertion_id), Errors::DISPUTE_NOT_ALLOWED);
+
+            assertion
+                .currency
+                .transfer_from(
+                    starknet::get_caller_address(), starknet::get_contract_address(), assertion.bond
+                );
+
+            self.reentrancy_guard.end();
+        }
     }
 
 
@@ -261,11 +300,11 @@ pub mod optimistic_oracle {
 
 
         fn sync_params(ref self: ContractState, identifier: felt252, currency: ContractAddress) {
-            let cache_oracle = self
+            let cached_oracle = self
                 .finder
                 .read()
                 .get_implementation_address(OracleInterfaces::ORACLE);
-            self.cache_oracle.write(cache_oracle);
+            self.cached_oracle.write(cached_oracle);
             self
                 .cached_identifiers
                 .write(
@@ -318,6 +357,26 @@ pub mod optimistic_oracle {
             }
         }
 
+        fn is_dispute_allowed(self: @ContractState, assertion_id: felt252) -> bool {
+            if (!self
+                .assertions
+                .read(assertion_id)
+                .escalation_manager_settings
+                .validate_disputers) {
+                return true;
+            }
+            let em = self
+                .assertions
+                .read(assertion_id)
+                .escalation_manager_settings
+                .escalation_manager;
+            if (em == contract_address_const::<0>()) {
+                return true;
+            };
+            return IEscalationManagerDispatcher { contract_address: em }
+                .is_dispute_allowed(assertion_id, starknet::get_caller_address());
+        }
+
         fn get_assertion_policy(self: @ContractState, assertion_id: felt252) -> AssertionPolicy {
             let em = self.get_escalation_manager(assertion_id);
             if (em == contract_address_const::<0>()) {
@@ -335,6 +394,27 @@ pub mod optimistic_oracle {
             self.assertions.read(assertion_id).escalation_manager_settings.escalation_manager
         }
 
+        fn oracle_request_price(
+            self: @ContractState, assertion_id: felt252, identifier: felt252, time: u256
+        ) {
+            self
+                .get_oracle(assertion_id)
+                .request_price(identifier, time, self.stamp_assertion(assertion_id));
+        }
+
+        fn get_oracle(self: @ContractState, assertion_id: felt252) -> IOracleAncillaryDispatcher {
+            if (self
+                .assertions
+                .read(assertion_id)
+                .escalation_manager_settings
+                .arbitrate_via_escalation_manager) {
+                return IOracleAncillaryDispatcher {
+                    contract_address: self.get_escalation_manager(assertion_id)
+                };
+            }
+            IOracleAncillaryDispatcher { contract_address: self.cached_oracle.read() }
+        }
+
         fn get_store(self: @ContractState) -> IStoreDispatcher {
             IStoreDispatcher {
                 contract_address: self
@@ -342,6 +422,19 @@ pub mod optimistic_oracle {
                     .read()
                     .get_implementation_address(OracleInterfaces::STORE)
             }
+        }
+
+        fn stamp_assertion(self: @ContractState, assertion_id: felt252) -> ByteArray {
+            // TODO: write current implementation using Ancillary Implementation
+            let mut key: ByteArray = Default::default();
+            key.append_word('assertionId', 11);
+            let mut current: ByteArray = Default::default();
+            let mut oo_key: ByteArray = Default::default();
+            oo_key.append_word('ooAsserter', 10);
+            let asserter = self.assertions.read(assertion_id).asserter;
+            append_key_value_address(
+                append_key_value_felt252(current, key, assertion_id), oo_key, asserter
+            )
         }
 
         fn get_minimum_bond(self: @ContractState, currency: ContractAddress) -> u256 {
