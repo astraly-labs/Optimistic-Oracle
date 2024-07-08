@@ -1,7 +1,7 @@
 #[starknet::contract]
 pub mod address_whitelist {
     use core::starknet::event::EventEmitter;
-use starknet::ContractAddress; 
+    use starknet::ContractAddress;
     use openzeppelin::security::reentrancyguard::{
         ReentrancyGuardComponent,
         ReentrancyGuardComponent::InternalTrait as InternalReentrancyGuardImpl
@@ -16,25 +16,25 @@ use starknet::ContractAddress;
         path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent
     );
 
-    #[derive(PartialEq, Drop, Serde)]
+    #[derive(PartialEq, Drop, Serde, starknet::Store)]
     pub enum Status {
-        None, 
-        In, 
+        None,
+        In,
         Out,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        AddedToWhitelist:AddedToWhitelist,
-        RemovedFromWhitelist:RemovedFromWhitelist,
+        AddedToWhitelist: AddedToWhitelist,
+        RemovedFromWhitelist: RemovedFromWhitelist,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
     }
 
-    
+
     #[derive(starknet::Event, Drop)]
     pub struct AddedToWhitelist {
         pub added_address: ContractAddress,
@@ -46,7 +46,7 @@ use starknet::ContractAddress;
 
     #[storage]
     struct Storage {
-        whitelist_indices : LegacyMap::<ContractAddress, ContractAddress>, 
+        whitelist_indices: LegacyMap::<ContractAddress, ContractAddress>,
         whitelist: LegacyMap::<ContractAddress, Status>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage,
@@ -60,36 +60,29 @@ use starknet::ContractAddress;
         self.ownable.initializer(owner);
     }
 
+    #[abi(embed_v0)]
     impl IAddressWhitelistImpl of IAddressWhitelist<ContractState> {
         fn add_to_whitelist(ref self: ContractState, new_element: ContractAddress) {
             self.ownable.assert_only_owner();
             self.reentrancy_guard.start();
             let status = self.whitelist.read(new_element);
-            if (status == Status::In){
+            if (status == Status::In) {
                 return;
-            }   
-            if (status == Status::None){
-                self.insert_to_whitelist(new_element); 
+            }
+            if (status == Status::None) {
+                self.insert_to_whitelist(new_element);
             }
             self.whitelist.write(new_element, Status::In);
-            self.emit(
-                AddedToWhitelist{
-                    added_address: new_element
-                }
-            );
+            self.emit(AddedToWhitelist { added_address: new_element });
             self.reentrancy_guard.end();
         }
 
-        fn remove_from_whitelist(ref self: ContractState, element_to_remove: ContractAddress){
+        fn remove_from_whitelist(ref self: ContractState, element_to_remove: ContractAddress) {
             self.ownable.assert_only_owner();
             self.reentrancy_guard.start();
-            if (self.whitelist.read(element_to_remove) == Status::Out){
+            if (self.whitelist.read(element_to_remove) == Status::Out) {
                 self.whitelist.write(element_to_remove, Status::Out);
-                self.emit(
-                    RemovedFromWhitelist{
-                        removed_address: element_to_remove
-                    }
-                );
+                self.emit(RemovedFromWhitelist { removed_address: element_to_remove });
             }
             self.reentrancy_guard.end();
         }
@@ -98,9 +91,9 @@ use starknet::ContractAddress;
             self.whitelist.read(element_to_check) == Status::In
         }
 
-        fn get_whitelist(self: @ContractState) -> Span<ContractAddress>{
+        fn get_whitelist(self: @ContractState) -> Span<ContractAddress> {
             self.build_whitelist_indices_array()
-        } 
+        }
     }
 
     #[generate_trait]
@@ -126,7 +119,7 @@ use starknet::ContractAddress;
                 if (indice == 0.try_into().unwrap()) {
                     break ();
                 }
-                if (self.whitelist.read(indice) == Status::In){
+                if (self.whitelist.read(indice) == Status::In) {
                     whitelist_indices.append(indice);
                 }
                 index = indice;
@@ -135,11 +128,9 @@ use starknet::ContractAddress;
             whitelist_indices.span()
         }
 
-        fn insert_to_whitelist(ref self: ContractState, new_element: ContractAddress){
-            let last_index = self.find_last_whitelist_indice(); 
+        fn insert_to_whitelist(ref self: ContractState, new_element: ContractAddress) {
+            let last_index = self.find_last_whitelist_indice();
             self.whitelist_indices.write(last_index, new_element);
         }
     }
-
-
 }
