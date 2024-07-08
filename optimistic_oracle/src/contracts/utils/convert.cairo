@@ -1,4 +1,7 @@
+use alexandria_math::BitShift;
+
 pub const BYTES_IN_BYTES31: usize = 31;
+pub const FELT252_MASK: u256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
 
 pub fn convert_byte_array_to_felt_array(input: @ByteArray) -> Array<felt252> {
@@ -38,4 +41,12 @@ pub fn convert_byte_array_to_felt_array(input: @ByteArray) -> Array<felt252> {
     }
 
     output
+}
+
+pub fn up_bytes(input: u256) -> u256 {
+    BitShift::shr(input, 248) & 0xFF
+}
+
+pub fn down_bytes(input: u256) -> u256 {
+    input & FELT252_MASK
 }
