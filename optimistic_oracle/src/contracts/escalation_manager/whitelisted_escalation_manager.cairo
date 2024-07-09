@@ -3,7 +3,7 @@ pub mod whitelisted_escalation_manager {
     use starknet::ContractAddress;
     use optimistic_oracle::contracts::interfaces::{
         IOptimisticOracleDispatcher, IOptimisticOracleDispatcherTrait, AssertionPolicy,
-        IEscalationManager, IAssertionCallback, IDisputeCallerConfiguration
+        IEscalationManager, IDisputeCallerConfiguration
     };
     use openzeppelin::access::ownable::OwnableComponent;
 

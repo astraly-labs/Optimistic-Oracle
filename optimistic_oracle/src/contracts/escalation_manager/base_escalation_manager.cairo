@@ -3,7 +3,7 @@ pub mod base_escalation_manager {
     use starknet::ContractAddress;
     use optimistic_oracle::contracts::interfaces::{
         IOptimisticOracleDispatcher, IOptimisticOracleDispatcherTrait, AssertionPolicy,
-        IEscalationManager, IAssertionCallback
+        IEscalationManager, IOptimisticOracleV3CallbackRecipient
     };
 
     #[storage]
@@ -63,7 +63,7 @@ pub mod base_escalation_manager {
 
 
     #[abi(embed_v0)]
-    impl CallbackImpl of IAssertionCallback<ContractState> {
+    impl IOptimisticOracleV3CallbackRecipientImpl of IOptimisticOracleV3CallbackRecipient<ContractState> {
         fn assertion_resolved_callback(
             self: @ContractState, assertion_id: felt252, asserted_truthfully: bool
         ) {}
