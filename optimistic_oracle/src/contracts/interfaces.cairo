@@ -173,8 +173,10 @@ pub trait IMockOracleAncillaryConfiguration<TContractState> {
 
 
 #[starknet::interface]
-pub trait IOptimisticOracleV3CallbackRecipient<TContractState>{
-    fn assertion_resolved_callback(self: @TContractState, assertion_id:felt252, asserted_truthfully: bool);
+pub trait IOptimisticOracleV3CallbackRecipient<TContractState> {
+    fn assertion_resolved_callback(
+        self: @TContractState, assertion_id: felt252, asserted_truthfully: bool
+    );
 
     fn assertion_disputed_callback(self: @TContractState, assertion_id: felt252);
 }

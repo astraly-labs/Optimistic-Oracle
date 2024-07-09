@@ -7,7 +7,8 @@ pub mod optimistic_oracle {
         IAddressWhitelistDispatcher, IAddressWhitelistDispatcherTrait, IStoreDispatcher,
         IStoreDispatcherTrait, Assertion, EscalationManagerSettings, AssertionPolicy,
         IEscalationManagerDispatcher, IEscalationManagerDispatcherTrait, IOracleAncillaryDispatcher,
-        IOracleAncillaryDispatcherTrait, IOptimisticOracleV3CallbackRecipientDispatcher, IOptimisticOracleV3CallbackRecipientDispatcherTrait, IOptimisticOracleV3CallbackRecipient
+        IOracleAncillaryDispatcherTrait, IOptimisticOracleV3CallbackRecipientDispatcher,
+        IOptimisticOracleV3CallbackRecipientDispatcherTrait, IOptimisticOracleV3CallbackRecipient
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use alexandria_data_structures::array_ext::ArrayTraitExt;
@@ -78,7 +79,7 @@ pub mod optimistic_oracle {
     #[derive(Drop, starknet::Event)]
     enum Event {
         AdminPropertiesSet: AdminPropertiesSet,
-        AssertionSettled:AssertionSettled,
+        AssertionSettled: AssertionSettled,
         AssertionMade: AssertionMade,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
@@ -94,14 +95,13 @@ pub mod optimistic_oracle {
     }
 
     #[derive(starknet::Event, Drop)]
-    pub struct AssertionSettled{
+    pub struct AssertionSettled {
         pub assertion_id: felt252,
         pub bond_recipient: ContractAddress,
-        pub disputed:bool,
+        pub disputed: bool,
         pub settlement_resolution: bool,
         pub settle_caller: ContractAddress,
     }
-
 
 
     #[derive(starknet::Event, Drop)]
@@ -280,65 +280,78 @@ pub mod optimistic_oracle {
             self.reentrancy_guard.end();
         }
 
-        fn settle_assertion(ref self: ContractState, assertion_id: felt252){
+        fn settle_assertion(ref self: ContractState, assertion_id: felt252) {
             self.reentrancy_guard.start();
-            let mut assertion =  self.assertions.read(assertion_id);
-            assert(assertion.asserter != contract_address_const::<0>(), Errors::ASSERTION_DOES_NOT_EXIST);
+            let mut assertion = self.assertions.read(assertion_id);
+            assert(
+                assertion.asserter != contract_address_const::<0>(),
+                Errors::ASSERTION_DOES_NOT_EXIST
+            );
             assert(!assertion.settled, Errors::ASSERTION_ALREADY_SETTLED);
             assertion.settled = true;
-            if (assertion.disputer == contract_address_const::<0>()){
-                assert(assertion.expiration_time <= starknet::get_block_timestamp(), Errors::ASSERTION_NOT_EXPIRED);
-                assertion.settlement_resolution = true; 
+            if (assertion.disputer == contract_address_const::<0>()) {
+                assert(
+                    assertion.expiration_time <= starknet::get_block_timestamp(),
+                    Errors::ASSERTION_NOT_EXPIRED
+                );
+                assertion.settlement_resolution = true;
                 assertion.currency.transfer(assertion.asserter, assertion.bond);
                 self.callback_on_assertion_resolved(assertion_id, true);
                 self.assertions.write(assertion_id, assertion);
 
-                self.emit(
-                    AssertionSettled {
-                        assertion_id,
-                        bond_recipient: assertion.asserter,
-                        disputed:false,
-                        settlement_resolution: true,
-                        settle_caller: starknet::get_caller_address(),
-                    }
-                );
+                self
+                    .emit(
+                        AssertionSettled {
+                            assertion_id,
+                            bond_recipient: assertion.asserter,
+                            disputed: false,
+                            settlement_resolution: true,
+                            settle_caller: starknet::get_caller_address(),
+                        }
+                    );
             } else {
-                let resolved_price = self.oracle_get_price(assertion_id, assertion.identifier, assertion.assertion_time.into());
-                if (assertion.escalation_manager_settings.discard_oracle){
+                let resolved_price = self
+                    .oracle_get_price(
+                        assertion_id, assertion.identifier, assertion.assertion_time.into()
+                    );
+                if (assertion.escalation_manager_settings.discard_oracle) {
                     assertion.settlement_resolution = false;
-                }else {
+                } else {
                     assertion.settlement_resolution = resolved_price == NUMERICAL_TRUE;
                     let bond_recipient = if (resolved_price == NUMERICAL_TRUE) {
                         assertion.asserter
-                    }else {
+                    } else {
                         assertion.disputer
                     };
-                    let oracle_fee = (self.burned_bond_percentage.read() * assertion.bond) / 1000000000000000000; 
+                    let oracle_fee = (self.burned_bond_percentage.read() * assertion.bond)
+                        / 1000000000000000000;
                     let bond_recipient_amount = assertion.bond * 2 - oracle_fee;
                     assertion.currency.transfer(self.get_store().contract_address, oracle_fee);
                     assertion.currency.transfer(bond_recipient, bond_recipient_amount);
 
-                    if (!assertion.escalation_manager_settings.discard_oracle)
-                    {self.callback_on_assertion_resolved(assertion_id, assertion.settlement_resolution);}
-                
+                    if (!assertion.escalation_manager_settings.discard_oracle) {
+                        self
+                            .callback_on_assertion_resolved(
+                                assertion_id, assertion.settlement_resolution
+                            );
+                    }
+
                     self.assertions.write(assertion_id, assertion);
-    
-                    self.emit(
-                        AssertionSettled{
-                            assertion_id,
-                            bond_recipient: bond_recipient,
-                            disputed:true,
-                            settlement_resolution: assertion.settlement_resolution,
-                            settle_caller: starknet::get_caller_address(),
 
-                        }
-                    )
-            }
+                    self
+                        .emit(
+                            AssertionSettled {
+                                assertion_id,
+                                bond_recipient: bond_recipient,
+                                disputed: true,
+                                settlement_resolution: assertion.settlement_resolution,
+                                settle_caller: starknet::get_caller_address(),
+                            }
+                        )
                 }
+            }
 
-            self.
-            self.reentrancy_guard.end();
-
+            self.self.reentrancy_guard.end();
         }
     }
 
@@ -399,8 +412,12 @@ pub mod optimistic_oracle {
             }
         }
 
-        fn oracle_get_price(self: @ContractState, assertion_id: felt252, identifier: felt252 , time: u256) -> u256 {
-            self.get_oracle(assertion_id).get_price(identifier, time, self.stamp_assertion(assertion_id))
+        fn oracle_get_price(
+            self: @ContractState, assertion_id: felt252, identifier: felt252, time: u256
+        ) -> u256 {
+            self
+                .get_oracle(assertion_id)
+                .get_price(identifier, time, self.stamp_assertion(assertion_id))
         }
 
         fn validate_and_cache_identifier(ref self: ContractState, identifier: felt252) -> bool {
@@ -524,19 +541,22 @@ pub mod optimistic_oracle {
         fn assert_only_owner(self: @ContractState) {
             self.ownable.assert_only_owner();
         }
-    
 
-        fn callback_on_assertion_resolved(self: @ContractState, assertion_id: felt252, asserted_truthfully: bool){
-            let cr = self.assertions.read(assertion_id).callback_recipient; 
+
+        fn callback_on_assertion_resolved(
+            self: @ContractState, assertion_id: felt252, asserted_truthfully: bool
+        ) {
+            let cr = self.assertions.read(assertion_id).callback_recipient;
             let em = self.get_escalation_manager(assertion_id);
-            if (cr != contract_address_const::<0>()){
-                IOptimisticOracleV3CallbackRecipientDispatcher{contract_address: cr}.assertion_resolved_callback(assertion_id, asserted_truthfully);    
+            if (cr != contract_address_const::<0>()) {
+                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: cr }
+                    .assertion_resolved_callback(assertion_id, asserted_truthfully);
             }
-            if (em != contract_address_const::<0>()){
-                IOptimisticOracleV3CallbackRecipientDispatcher{contract_address: em}.assertion_resolved_callback(assertion_id, asserted_truthfully);
+            if (em != contract_address_const::<0>()) {
+                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: em }
+                    .assertion_resolved_callback(assertion_id, asserted_truthfully);
             }
-
-        }   
+        }
     }
 
 

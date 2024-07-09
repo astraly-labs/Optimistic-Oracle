@@ -63,7 +63,9 @@ pub mod base_escalation_manager {
 
 
     #[abi(embed_v0)]
-    impl IOptimisticOracleV3CallbackRecipientImpl of IOptimisticOracleV3CallbackRecipient<ContractState> {
+    impl IOptimisticOracleV3CallbackRecipientImpl of IOptimisticOracleV3CallbackRecipient<
+        ContractState
+    > {
         fn assertion_resolved_callback(
             self: @ContractState, assertion_id: felt252, asserted_truthfully: bool
         ) {}
