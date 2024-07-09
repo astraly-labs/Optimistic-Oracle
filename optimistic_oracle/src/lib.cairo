@@ -14,7 +14,6 @@ pub mod contracts {
         pub mod base_escalation_manager;
         pub mod whitelisted_escalation_manager;
     }
-
     pub mod common {
         pub mod address_whitelist;
     }

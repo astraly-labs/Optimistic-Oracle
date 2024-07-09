@@ -351,7 +351,7 @@ pub mod optimistic_oracle {
                 }
             }
 
-            self.self.reentrancy_guard.end();
+            self.reentrancy_guard.end();
         }
     }
 

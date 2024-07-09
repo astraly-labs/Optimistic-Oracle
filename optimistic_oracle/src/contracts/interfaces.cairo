@@ -5,7 +5,7 @@ use optimistic_oracle::contracts::mocks::oracle_ancillary::mock_oracle_ancillary
     QueryPoint, QueryIndex
 };
 
-#[derive(starknet::Store, Drop, Serde)]
+#[derive(starknet::Store, Drop, Serde, Copy)]
 pub struct EscalationManagerSettings {
     pub arbitrate_via_escalation_manager: bool,
     pub discard_oracle: bool,
@@ -14,7 +14,7 @@ pub struct EscalationManagerSettings {
     pub escalation_manager: ContractAddress,
 }
 
-#[derive(starknet::Store, Drop, Serde)]
+#[derive(starknet::Store, Drop, Serde, Copy)]
 pub struct Assertion {
     pub escalation_manager_settings: EscalationManagerSettings,
     pub asserter: ContractAddress,
