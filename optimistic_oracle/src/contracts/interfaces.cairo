@@ -66,6 +66,8 @@ pub trait IOptimisticOracle<TContractState> {
     fn dispute_assertion(
         ref self: TContractState, assertion_id: felt252, disputer: ContractAddress
     );
+
+    fn settle_assertion(ref self: TContractState, assertion_id: felt252);
 }
 #[starknet::interface]
 pub trait IFinder<TContractState> {
@@ -142,15 +144,6 @@ pub trait IOracleAncillary<TContractState> {
     ) -> u256;
 }
 
-#[starknet::interface]
-pub trait IAssertionCallback<TContractState> {
-    fn assertion_resolved_callback(
-        self: @TContractState, assertion_id: felt252, asserted_truthfully: bool
-    );
-
-    fn assertion_disputed_callback(self: @TContractState, assertion_id: felt252);
-}
-
 
 #[starknet::interface]
 pub trait IDisputeCallerConfiguration<TContractState> {
@@ -178,3 +171,10 @@ pub trait IMockOracleAncillaryConfiguration<TContractState> {
     fn get_request_parameters(self: @TContractState, request_id: felt252) -> QueryPoint;
 }
 
+
+#[starknet::interface]
+pub trait IOptimisticOracleV3CallbackRecipient<TContractState>{
+    fn assertion_resolved_callback(self: @TContractState, assertion_id:felt252, asserted_truthfully: bool);
+
+    fn assertion_disputed_callback(self: @TContractState, assertion_id: felt252);
+}
