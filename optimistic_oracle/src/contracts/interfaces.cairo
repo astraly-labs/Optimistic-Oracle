@@ -4,6 +4,7 @@ use openzeppelin::token::erc20::interface::ERC20ABIDispatcher;
 use optimistic_oracle::contracts::mocks::oracle_ancillary::mock_oracle_ancillary::{
     QueryPoint, QueryIndex
 };
+use optimistic_oracle::examples::prediction_market::prediction_market::Market;
 
 #[derive(starknet::Store, Drop, Serde, Copy)]
 pub struct EscalationManagerSettings {
@@ -68,6 +69,10 @@ pub trait IOptimisticOracle<TContractState> {
     );
 
     fn settle_assertion(ref self: TContractState, assertion_id: felt252);
+
+    fn get_minimum_bond(self: @TContractState, currency: ContractAddress) -> u256 ;
+
+    fn stamp_assertion(self: @TContractState, assertion_id: felt252) -> ByteArray;
 }
 #[starknet::interface]
 pub trait IFinder<TContractState> {
@@ -175,8 +180,53 @@ pub trait IMockOracleAncillaryConfiguration<TContractState> {
 #[starknet::interface]
 pub trait IOptimisticOracleV3CallbackRecipient<TContractState> {
     fn assertion_resolved_callback(
-        self: @TContractState, assertion_id: felt252, asserted_truthfully: bool
+        ref self: TContractState, assertion_id: felt252, asserted_truthfully: bool
     );
 
     fn assertion_disputed_callback(self: @TContractState, assertion_id: felt252);
+}
+
+
+#[starknet::interface]
+pub trait IPredictionMarket<TContractState> {
+    fn get_market(self: @TContractState, market_id: felt252) -> Market;
+
+    fn initialize_market(
+        ref self: TContractState,
+        outcome1: ByteArray,
+        outcome2: ByteArray,
+        description: ByteArray,
+        reward: u256,
+        required_bond: u256
+    ) -> felt252;
+
+    fn create_outcome_tokens(ref self: TContractState, market_id: felt252, tokens_to_create: u256);
+
+    fn redeem_outcome_tokens(ref self: TContractState, market_id: felt252, tokens_to_redeeem: u256); 
+
+    fn assert_market(
+        ref self: TContractState, market_id: felt252, asserted_outcome: ByteArray
+    ) -> felt252 ; 
+
+    fn settle_outcome_tokens(ref self: TContractState, market_id: felt252) -> u256;
+}
+
+
+#[starknet::interface]
+pub trait IExtendedERC20<TContractState> {
+    fn mint(ref self: TContractState, recipient: ContractAddress, value: u256);
+
+    fn burn(ref self: TContractState, account: ContractAddress, value: u256);
+
+
+    fn only_owner(self: @TContractState, caller_address: ContractAddress) -> bool ;
+
+    fn grant_minter_role(ref self: TContractState, minter: ContractAddress) ;
+
+    fn revoke_minter_role(ref self: TContractState, account: ContractAddress);
+
+
+    fn grant_burner_role(ref self: TContractState, burner: ContractAddress) ;
+
+    fn revoke_burner_role(ref self: TContractState, account: ContractAddress) ;
 }
