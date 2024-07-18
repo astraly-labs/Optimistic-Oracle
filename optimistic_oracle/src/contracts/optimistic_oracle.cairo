@@ -350,8 +350,27 @@ pub mod optimistic_oracle {
                         )
                 }
             }
-
             self.reentrancy_guard.end();
+        }
+
+
+        fn get_minimum_bond(self: @ContractState, currency: ContractAddress) -> u256 {
+            let final_fee = self.cached_currencies.read(currency).final_fee;
+            let burned_bond_percentage = self.burned_bond_percentage.read();
+            (final_fee * pow(10, PROTOCOL_DECIMALS.into())) / burned_bond_percentage
+        }
+
+        fn stamp_assertion(self: @ContractState, assertion_id: felt252) -> ByteArray {
+            // TODO: write current implementation using Ancillary Implementation
+            let mut key: ByteArray = Default::default();
+            key.append_word('assertionId', 11);
+            let mut current: ByteArray = Default::default();
+            let mut oo_key: ByteArray = Default::default();
+            oo_key.append_word('ooAsserter', 10);
+            let asserter = self.assertions.read(assertion_id).asserter;
+            append_key_value_address(
+                append_key_value_felt252(current, key, assertion_id), oo_key, asserter
+            )
         }
     }
 
@@ -518,25 +537,6 @@ pub mod optimistic_oracle {
             }
         }
 
-        fn stamp_assertion(self: @ContractState, assertion_id: felt252) -> ByteArray {
-            // TODO: write current implementation using Ancillary Implementation
-            let mut key: ByteArray = Default::default();
-            key.append_word('assertionId', 11);
-            let mut current: ByteArray = Default::default();
-            let mut oo_key: ByteArray = Default::default();
-            oo_key.append_word('ooAsserter', 10);
-            let asserter = self.assertions.read(assertion_id).asserter;
-            append_key_value_address(
-                append_key_value_felt252(current, key, assertion_id), oo_key, asserter
-            )
-        }
-
-        fn get_minimum_bond(self: @ContractState, currency: ContractAddress) -> u256 {
-            let final_fee = self.cached_currencies.read(currency).final_fee;
-            let burned_bond_percentage = self.burned_bond_percentage.read();
-            (final_fee * pow(10, PROTOCOL_DECIMALS.into())) / burned_bond_percentage
-        }
-
 
         fn assert_only_owner(self: @ContractState) {
             self.ownable.assert_only_owner();
@@ -544,7 +544,7 @@ pub mod optimistic_oracle {
 
 
         fn callback_on_assertion_resolved(
-            self: @ContractState, assertion_id: felt252, asserted_truthfully: bool
+            ref self: ContractState, assertion_id: felt252, asserted_truthfully: bool
         ) {
             let cr = self.assertions.read(assertion_id).callback_recipient;
             let em = self.get_escalation_manager(assertion_id);

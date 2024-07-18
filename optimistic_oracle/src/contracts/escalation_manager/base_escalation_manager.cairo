@@ -67,7 +67,7 @@ pub mod base_escalation_manager {
         ContractState
     > {
         fn assertion_resolved_callback(
-            self: @ContractState, assertion_id: felt252, asserted_truthfully: bool
+            ref self: ContractState, assertion_id: felt252, asserted_truthfully: bool
         ) {}
 
         fn assertion_disputed_callback(self: @ContractState, assertion_id: felt252) {}

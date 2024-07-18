@@ -6,6 +6,7 @@ pub mod contracts {
         pub mod constants;
         pub mod convert;
         pub mod ancillary_data;
+        pub mod keccak;
     }
     pub mod data_verification {
         pub mod identifier_whitelist;
@@ -19,5 +20,9 @@ pub mod contracts {
     }
     pub mod mocks {
         pub mod oracle_ancillary;
+        pub mod full_erc20;
     }
+}
+pub mod examples {
+    pub mod prediction_market;
 }
