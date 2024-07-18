@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod mock_fee_token {
+pub mod full_erc20 {
     use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
     use openzeppelin::introspection::src5::SRC5Component;
     use starknet::ContractAddress;
@@ -10,9 +10,9 @@ pub mod mock_fee_token {
     component!(path: AccessControlComponent, storage: accesscontrol, event: AccessControlEvent);
 
 
-    const MINTER_ROLE: felt252 = selector!("Minter");
+    pub const MINTER_ROLE: felt252 = selector!("Minter");
     const OWNER_ROLE: felt252 = selector!("Owner");
-    const BURNER_ROLE: felt252 = selector!("Burner");
+    pub const BURNER_ROLE: felt252 = selector!("Burner");
 
     #[abi(embed_v0)]
     impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
