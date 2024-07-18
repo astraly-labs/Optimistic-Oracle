@@ -1,5 +1,3 @@
-
-
 const KECCAK_FULL_RATE_IN_U64S: usize = 17;
 use core::starknet::SyscallResultTrait;
 /// The padding in keccak256 is "1 0* 1".
@@ -70,19 +68,20 @@ pub fn compute_keccak_byte_array(arr: @ByteArray) -> u256 {
     let mut inner = 0;
     let mut limb: u64 = 0;
     let mut factor: u64 = 1;
-    while let Option::Some(b) = arr.at(i) {
-        limb = limb + b.into() * factor;
-        i += 1;
-        inner += 1;
-        if inner == 8 {
-            input.append(limb);
-            inner = 0;
-            limb = 0;
-            factor = 1;
-        } else {
-            factor *= 0x100;
-        }
-    };
+    while let Option::Some(b) = arr
+        .at(i) {
+            limb = limb + b.into() * factor;
+            i += 1;
+            inner += 1;
+            if inner == 8 {
+                input.append(limb);
+                inner = 0;
+                limb = 0;
+                factor = 1;
+            } else {
+                factor *= 0x100;
+            }
+        };
     add_padding(ref input, limb, inner);
     starknet::syscalls::keccak_syscall(input.span()).unwrap_syscall()
 }

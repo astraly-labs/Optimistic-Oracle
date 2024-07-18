@@ -45,7 +45,9 @@ pub mod full_erc20 {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, name: ByteArray, symbol: ByteArray, owner:ContractAddress) {
+    fn constructor(
+        ref self: ContractState, name: ByteArray, symbol: ByteArray, owner: ContractAddress
+    ) {
         self.erc20.initializer(name, symbol);
         self.accesscontrol.initializer();
         self.accesscontrol._grant_role(OWNER_ROLE, owner);
@@ -54,13 +56,17 @@ pub mod full_erc20 {
     #[abi(embed_v0)]
     impl IExtendedERC20Impl of IExtendedERC20<ContractState> {
         fn mint(ref self: ContractState, recipient: ContractAddress, value: u256) {
-            let is_minter = self.accesscontrol.has_role(MINTER_ROLE, starknet::get_caller_address());
+            let is_minter = self
+                .accesscontrol
+                .has_role(MINTER_ROLE, starknet::get_caller_address());
             assert(is_minter, 'Only Minter can mint');
             self.erc20.mint(recipient, value);
         }
 
         fn burn(ref self: ContractState, account: ContractAddress, value: u256) {
-            let is_burner = self.accesscontrol.has_role(BURNER_ROLE, starknet::get_caller_address());
+            let is_burner = self
+                .accesscontrol
+                .has_role(BURNER_ROLE, starknet::get_caller_address());
             assert(is_burner, 'Only Burner can burn');
             self.erc20.mint(account, value);
         }
@@ -94,6 +100,4 @@ pub mod full_erc20 {
             self.accesscontrol._revoke_role(BURNER_ROLE, account);
         }
     }
-
-
 }

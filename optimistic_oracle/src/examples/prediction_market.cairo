@@ -1,15 +1,15 @@
 #[starknet::contract]
 pub mod prediction_market {
     use starknet::{ContractAddress, contract_address_const, ClassHash, syscalls::deploy_syscall};
-    use openzeppelin::token::erc20::interface::{
-        ERC20ABIDispatcher, ERC20ABIDispatcherTrait
-    };
+    use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use optimistic_oracle::contracts::interfaces::{
         IFinderDispatcher, IFinderDispatcherTrait, IOptimisticOracleDispatcherTrait,
-        IOptimisticOracleDispatcher, IOptimisticOracleV3CallbackRecipient, IPredictionMarket,IExtendedERC20Dispatcher, IExtendedERC20DispatcherTrait, IAddressWhitelistDispatcher, IAddressWhitelistDispatcherTrait
+        IOptimisticOracleDispatcher, IOptimisticOracleV3CallbackRecipient, IPredictionMarket,
+        IExtendedERC20Dispatcher, IExtendedERC20DispatcherTrait, IAddressWhitelistDispatcher,
+        IAddressWhitelistDispatcherTrait
     };
     use optimistic_oracle::contracts::utils::keccak::compute_keccak_byte_array;
-    use optimistic_oracle::contracts::mocks::full_erc20::full_erc20::{MINTER_ROLE,BURNER_ROLE};
+    use optimistic_oracle::contracts::mocks::full_erc20::full_erc20::{MINTER_ROLE, BURNER_ROLE};
     use optimistic_oracle::contracts::optimistic_oracle::optimistic_oracle::DEFAULT_IDENTIFIER;
     use core::poseidon::poseidon_hash_span;
     use optimistic_oracle::contracts::utils::convert::{byte_array_as_felt_array};
@@ -163,9 +163,7 @@ pub mod prediction_market {
             if (asserted_truthfully) {
                 market.resolved = true;
                 if (market.reward > 0) {
-                    ERC20ABIDispatcher{contract_address: self
-                        .currency
-                        .read().contract_address}
+                    ERC20ABIDispatcher { contract_address: self.currency.read().contract_address }
                         .transfer(self.asserted_markets.read(assertion_id).asserter, market.reward);
                     self
                         .emit(
@@ -265,8 +263,12 @@ pub mod prediction_market {
                     Market {
                         resolved: false,
                         asserted_outcome_id: 0,
-                        outcome1_token: IExtendedERC20Dispatcher { contract_address: token1_address },
-                        outcome2_token: IExtendedERC20Dispatcher { contract_address: token2_address },
+                        outcome1_token: IExtendedERC20Dispatcher {
+                            contract_address: token1_address
+                        },
+                        outcome2_token: IExtendedERC20Dispatcher {
+                            contract_address: token2_address
+                        },
                         reward: reward,
                         required_bond: required_bond,
                         outcome1: outcome1.clone(),
@@ -274,21 +276,27 @@ pub mod prediction_market {
                         description: description.clone()
                     }
                 );
-            if (reward >0){
-                self.currency.read().transfer_from(starknet::get_caller_address(), starknet::get_contract_address(), reward);
+            if (reward > 0) {
+                self
+                    .currency
+                    .read()
+                    .transfer_from(
+                        starknet::get_caller_address(), starknet::get_contract_address(), reward
+                    );
             }
-            self.emit(
-                MarketInitialized{
-                    market_id, 
-                    outcome1, 
-                    outcome2, 
-                    description, 
-                    outcome1_token: token1_address, 
-                    outcome2_token: token2_address, 
-                    reward, 
-                    required_bond
-                }
-            );
+            self
+                .emit(
+                    MarketInitialized {
+                        market_id,
+                        outcome1,
+                        outcome2,
+                        description,
+                        outcome1_token: token1_address,
+                        outcome2_token: token2_address,
+                        reward,
+                        required_bond
+                    }
+                );
             market_id
         }
 
@@ -296,7 +304,7 @@ pub mod prediction_market {
         fn assert_market(
             ref self: ContractState, market_id: felt252, asserted_outcome: ByteArray
         ) -> felt252 {
-            let UNRESOLVABLE: ByteArray= "Unresolvable";
+            let UNRESOLVABLE: ByteArray = "Unresolvable";
             let mut market = self.markets.read(market_id);
             assert(
                 market.outcome1_token.contract_address != contract_address_const::<0>(),
@@ -307,10 +315,18 @@ pub mod prediction_market {
                 market.outcome2_token.contract_address != contract_address_const::<0>(),
                 Errors::ASSERTION_ACTIVE_OR_RESOLVED
             );
-            assert(asserted_outcome_id == compute_keccak_byte_array(@market.outcome1) || asserted_outcome_id == compute_keccak_byte_array(@market.outcome2) ||asserted_outcome_id == compute_keccak_byte_array(@UNRESOLVABLE), Errors::INVALID_ASSERTED_OUTCOME);
+            assert(
+                asserted_outcome_id == compute_keccak_byte_array(@market.outcome1)
+                    || asserted_outcome_id == compute_keccak_byte_array(@market.outcome2)
+                    || asserted_outcome_id == compute_keccak_byte_array(@UNRESOLVABLE),
+                Errors::INVALID_ASSERTED_OUTCOME
+            );
 
             market.asserted_outcome_id = asserted_outcome_id;
-            let minimum_bond = self.oo.read().get_minimum_bond(self.currency.read().contract_address);
+            let minimum_bond = self
+                .oo
+                .read()
+                .get_minimum_bond(self.currency.read().contract_address);
             let bond = if (market.required_bond > minimum_bond) {
                 market.required_bond
             } else {
@@ -318,102 +334,136 @@ pub mod prediction_market {
             };
 
             let claim = compose_claim(asserted_outcome.clone(), market.description);
-            self.currency.read().transfer_from(starknet::get_caller_address(), starknet::get_contract_address(), bond);
+            self
+                .currency
+                .read()
+                .transfer_from(
+                    starknet::get_caller_address(), starknet::get_contract_address(), bond
+                );
             self.currency.read().approve(self.oo.read().contract_address, bond);
             let assertion_id = self.assert_thruth_with_defaults(claim, bond);
 
-            self.asserted_markets.write(assertion_id, AssertedMarket{
-                asserter: starknet::get_caller_address(), 
-                market_id: market_id
-            }); 
-            self.emit(
-                MarketAsserted{
-                    market_id, 
-                    asserted_outcome, 
-                    assertion_id
-                }
-            );
+            self
+                .asserted_markets
+                .write(
+                    assertion_id,
+                    AssertedMarket {
+                        asserter: starknet::get_caller_address(), market_id: market_id
+                    }
+                );
+            self.emit(MarketAsserted { market_id, asserted_outcome, assertion_id });
             assertion_id
         }
 
-        fn create_outcome_tokens(ref self: ContractState, market_id: felt252, tokens_to_create: u256) {
-            let market = self.markets.read(market_id);  
-            assert(market.outcome1_token.contract_address != contract_address_const::<0>(), Errors::MARKET_DOES_NOT_EXIST);
-            self.currency.read().transfer_from(starknet::get_caller_address(), starknet::get_contract_address(), tokens_to_create);
+        fn create_outcome_tokens(
+            ref self: ContractState, market_id: felt252, tokens_to_create: u256
+        ) {
+            let market = self.markets.read(market_id);
+            assert(
+                market.outcome1_token.contract_address != contract_address_const::<0>(),
+                Errors::MARKET_DOES_NOT_EXIST
+            );
+            self
+                .currency
+                .read()
+                .transfer_from(
+                    starknet::get_caller_address(),
+                    starknet::get_contract_address(),
+                    tokens_to_create
+                );
             market.outcome1_token.mint(starknet::get_caller_address(), tokens_to_create);
             market.outcome2_token.mint(starknet::get_caller_address(), tokens_to_create);
-            self.emit(
-                TokensCreated{
-                    market_id, 
-                    account: starknet::get_caller_address(), 
-                    tokens_created: tokens_to_create
-                }
-            );
+            self
+                .emit(
+                    TokensCreated {
+                        market_id,
+                        account: starknet::get_caller_address(),
+                        tokens_created: tokens_to_create
+                    }
+                );
         }
 
 
-        fn redeem_outcome_tokens(ref self: ContractState, market_id: felt252, tokens_to_redeeem: u256) {
-            let market = self.markets.read(market_id);  
-            assert(market.outcome1_token.contract_address != contract_address_const::<0>(), Errors::MARKET_DOES_NOT_EXIST);
+        fn redeem_outcome_tokens(
+            ref self: ContractState, market_id: felt252, tokens_to_redeeem: u256
+        ) {
+            let market = self.markets.read(market_id);
+            assert(
+                market.outcome1_token.contract_address != contract_address_const::<0>(),
+                Errors::MARKET_DOES_NOT_EXIST
+            );
             self.currency.read().transfer(starknet::get_caller_address(), tokens_to_redeeem);
             market.outcome1_token.burn(starknet::get_caller_address(), tokens_to_redeeem);
             market.outcome2_token.burn(starknet::get_caller_address(), tokens_to_redeeem);
-            self.emit(
-                TokensRedeemed{
-                    market_id, 
-                    account: starknet::get_caller_address(), 
-                    tokens_redeemed: tokens_to_redeeem
-                }
-            );
+            self
+                .emit(
+                    TokensRedeemed {
+                        market_id,
+                        account: starknet::get_caller_address(),
+                        tokens_redeemed: tokens_to_redeeem
+                    }
+                );
         }
 
         fn settle_outcome_tokens(ref self: ContractState, market_id: felt252) -> u256 {
             let caller = starknet::get_caller_address();
             let market = self.markets.read(market_id);
             assert(market.resolved, Errors::MARKET_NOT_RESOLVED);
-            let outcome1_balance = ERC20ABIDispatcher{contract_address: market.outcome1_token.contract_address}.balance_of(starknet::get_caller_address());
-            let outcome2_balance = ERC20ABIDispatcher{contract_address: market.outcome2_token.contract_address}.balance_of(starknet::get_caller_address());
+            let outcome1_balance = ERC20ABIDispatcher {
+                contract_address: market.outcome1_token.contract_address
+            }
+                .balance_of(starknet::get_caller_address());
+            let outcome2_balance = ERC20ABIDispatcher {
+                contract_address: market.outcome2_token.contract_address
+            }
+                .balance_of(starknet::get_caller_address());
 
-            let payout = if (market.asserted_outcome_id == compute_keccak_byte_array(@market.outcome1)){
+            let payout = if (market
+                .asserted_outcome_id == compute_keccak_byte_array(@market.outcome1)) {
                 outcome1_balance
-            } else if(market.asserted_outcome_id == compute_keccak_byte_array(@market.outcome2)){
+            } else if (market.asserted_outcome_id == compute_keccak_byte_array(@market.outcome2)) {
                 outcome2_balance
             } else {
-                (outcome1_balance + outcome2_balance)/2
-            }; 
+                (outcome1_balance + outcome2_balance) / 2
+            };
 
-            market.outcome1_token.burn(caller, outcome1_balance); 
-            market.outcome2_token.burn(caller, outcome2_balance); 
+            market.outcome1_token.burn(caller, outcome1_balance);
+            market.outcome2_token.burn(caller, outcome2_balance);
             self.currency.read().transfer(caller, payout);
 
-            self.emit(
-                TokensSettled{
-                    market_id, 
-                    account: caller, 
-                    payout, 
-                    outcome1_tokens: outcome1_balance,
-                    outcome2_tokens:outcome2_balance,
-                }
-            );
+            self
+                .emit(
+                    TokensSettled {
+                        market_id,
+                        account: caller,
+                        payout,
+                        outcome1_tokens: outcome1_balance,
+                        outcome2_tokens: outcome2_balance,
+                    }
+                );
             payout
         }
-
     }
 
     #[generate_trait]
-    impl InternalTraitImpl of InternalTrait{
-        fn assert_thruth_with_defaults(self: @ContractState, claim: ByteArray, bond: u256) -> felt252 {
-            self.oo.read().assert_truth(
-                claim, 
-                starknet::get_caller_address(), 
-                starknet::get_contract_address(),
-                contract_address_const::<0>(),
-                ASSERTION_LIVENESS, 
-                self.currency.read(), 
-                bond, 
-                self.default_identifier.read(), 
-                0
-            )
+    impl InternalTraitImpl of InternalTrait {
+        fn assert_thruth_with_defaults(
+            self: @ContractState, claim: ByteArray, bond: u256
+        ) -> felt252 {
+            self
+                .oo
+                .read()
+                .assert_truth(
+                    claim,
+                    starknet::get_caller_address(),
+                    starknet::get_contract_address(),
+                    contract_address_const::<0>(),
+                    ASSERTION_LIVENESS,
+                    self.currency.read(),
+                    bond,
+                    self.default_identifier.read(),
+                    0
+                )
         }
 
         fn get_collateral_whitelist(self: @ContractState) -> IAddressWhitelistDispatcher {
@@ -426,11 +476,11 @@ pub mod prediction_market {
         }
     }
 
-    fn compose_claim(outcome: ByteArray, description: ByteArray) -> ByteArray{
+    fn compose_claim(outcome: ByteArray, description: ByteArray) -> ByteArray {
         let mut claim: ByteArray = Default::default();
-        let p1:ByteArray = "As of assertion timestamp ";
-        let p2:ByteArray = ", the described prediction market outcome is: ";
-        let p3 :ByteArray= ". The market description is: ";
+        let p1: ByteArray = "As of assertion timestamp ";
+        let p2: ByteArray = ", the described prediction market outcome is: ";
+        let p3: ByteArray = ". The market description is: ";
         let mut block_timestamp: ByteArray = Default::default();
         block_timestamp.append_word(starknet::get_block_timestamp().into(), 8);
         claim = ByteArrayTrait::concat(@claim, @p1);
