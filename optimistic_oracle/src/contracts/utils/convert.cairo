@@ -43,6 +43,17 @@ pub fn convert_byte_array_to_felt_array(input: @ByteArray) -> Array<felt252> {
     output
 }
 
+
+// Optimise version
+pub fn byte_array_as_felt_array(self: @ByteArray) -> Array<felt252> {
+    let mut serialized = array![];
+
+    self.serialize(ref serialized);
+
+    serialized
+}
+
+
 pub fn up_bytes(input: u256) -> u256 {
     BitShift::shr(input, 248) & 0xFF
 }
