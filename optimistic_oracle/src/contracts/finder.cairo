@@ -20,7 +20,7 @@ pub mod finder {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         InterfaceImplementationChanged: InterfaceImplementationChanged,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
