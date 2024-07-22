@@ -73,6 +73,16 @@ pub trait IOptimisticOracle<TContractState> {
     fn get_minimum_bond(self: @TContractState, currency: ContractAddress) -> u256;
 
     fn stamp_assertion(self: @TContractState, assertion_id: felt252) -> ByteArray;
+
+    fn default_identifier(self: @TContractState,) -> felt252;
+
+    fn get_assertion(self: @TContractState, assertion_id: felt252) -> Assertion;
+
+    fn sync_params(ref self: TContractState, identifier: felt252, currency: ContractAddress);
+
+    fn settle_and_get_assertion_result(ref self: TContractState, assertion_id: felt252) -> bool;
+
+    fn get_assertion_result(self: @TContractState, assertion_id: felt252) -> bool;
 }
 #[starknet::interface]
 pub trait IFinder<TContractState> {

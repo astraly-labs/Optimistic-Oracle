@@ -1,7 +1,7 @@
 #[starknet::contract]
 pub mod address_whitelist {
     use core::starknet::event::EventEmitter;
-    use starknet::{storage_access::{Store, StorageBaseAddress},SyscallResult, ContractAddress};
+    use starknet::{storage_access::{Store, StorageBaseAddress}, SyscallResult, ContractAddress};
     use openzeppelin::security::reentrancyguard::{
         ReentrancyGuardComponent,
         ReentrancyGuardComponent::InternalTrait as InternalReentrancyGuardImpl
@@ -18,7 +18,7 @@ pub mod address_whitelist {
 
     #[derive(PartialEq, Drop, Serde)]
     pub enum Status {
-        None, 
+        None,
         Out,
         In,
     }
@@ -27,23 +27,27 @@ pub mod address_whitelist {
     // Store manual implementation (basic implementation panics if no default enum is defined for a given address, cf: https://github.com/starkware-libs/cairo/blob/b741c26c553fd9fa3246cee91fd5c637f225cdb9/crates/cairo-lang-starknet/src/plugin/derive/store.rs#L263)
     impl StatusStoreImpl of Store<Status> {
         fn read(address_domain: u32, base: StorageBaseAddress) -> SyscallResult<Status> {
-                    match Store::<felt252>::read(address_domain, base)? {
-                        0 => Result::Ok(Status::None),
-                        1 => Result::Ok(Status::Out),
-                        2 => Result::Ok(Status::In),
-                        _ => SyscallResult::Err(array!['Invalid Status value']),
-                    }
-                }
-                fn write(address_domain: u32, base: StorageBaseAddress, value: Status) -> SyscallResult<()> {
-                    let value_felt = match value {
-                                Status::None => 0,
-                                Status::Out => 1,
-                                Status::In => 2,
-                            };
-                        Store::<felt252>::write(address_domain, base, value_felt)
+            match Store::<felt252>::read(address_domain, base)? {
+                0 => Result::Ok(Status::None),
+                1 => Result::Ok(Status::Out),
+                2 => Result::Ok(Status::In),
+                _ => SyscallResult::Err(array!['Invalid Status value']),
+            }
+        }
+        fn write(
+            address_domain: u32, base: StorageBaseAddress, value: Status
+        ) -> SyscallResult<()> {
+            let value_felt = match value {
+                Status::None => 0,
+                Status::Out => 1,
+                Status::In => 2,
+            };
+            Store::<felt252>::write(address_domain, base, value_felt)
         }
 
-        fn read_at_offset(address_domain: u32, base: StorageBaseAddress, offset:u8) -> SyscallResult<Status> {
+        fn read_at_offset(
+            address_domain: u32, base: StorageBaseAddress, offset: u8
+        ) -> SyscallResult<Status> {
             match Store::<felt252>::read_at_offset(address_domain, base, offset)? {
                 0 => SyscallResult::Ok(Status::None),
                 1 => SyscallResult::Ok(Status::Out),
@@ -51,20 +55,21 @@ pub mod address_whitelist {
                 _ => SyscallResult::Err(array!['Invalid Status value']),
             }
         }
-        fn write_at_offset(address_domain: u32, base: StorageBaseAddress, offset: u8,value: Status) -> SyscallResult<()> {
+        fn write_at_offset(
+            address_domain: u32, base: StorageBaseAddress, offset: u8, value: Status
+        ) -> SyscallResult<()> {
             let value_felt = match value {
-                        Status::None => 0,
-                        Status::Out => 1,
-                        Status::In => 2,
-                    };
-                Store::<felt252>::write_at_offset(address_domain, base, offset, value_felt)
-}
-        fn size() -> u8 {
-           1
+                Status::None => 0,
+                Status::Out => 1,
+                Status::In => 2,
+            };
+            Store::<felt252>::write_at_offset(address_domain, base, offset, value_felt)
         }
-
+        fn size() -> u8 {
+            1
+        }
     }
-    
+
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -110,12 +115,12 @@ pub mod address_whitelist {
             self.reentrancy_guard.start();
             match self.get_status(new_element) {
                 Option::Some(status) => {
-                    if (status == Status::In){
+                    if (status == Status::In) {
                         self.reentrancy_guard.end();
                         return;
-                    } else if (status ==Status::Out){
+                    } else if (status == Status::Out) {
                         self.whitelist.write(new_element, Status::In);
-                        self.emit(AddedToWhitelist { added_address: new_element }); 
+                        self.emit(AddedToWhitelist { added_address: new_element });
                     } else {
                         self.insert_to_whitelist(new_element);
                         self.whitelist.write(new_element, Status::In);
@@ -152,8 +157,6 @@ pub mod address_whitelist {
 
     #[generate_trait]
     impl InternalTraitImpl of InternalTrait {
-
-
         fn get_status(self: @ContractState, address: ContractAddress) -> Option<Status> {
             match self.whitelist.read(address) {
                 Status::None => Option::Some(Status::None),

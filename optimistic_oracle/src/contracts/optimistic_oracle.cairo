@@ -73,6 +73,7 @@ pub mod optimistic_oracle {
         pub const DISPUTE_NOT_ALLOWED: felt252 = 'Dispute not allowed';
         pub const ASSERTION_ALREADY_SETTLED: felt252 = 'Assertion already settled';
         pub const ASSERTION_NOT_EXPIRED: felt252 = 'Assertion not expired';
+        pub const ASSERTION_NOT_SETTLED: felt252 = 'Assertion not settled';
     }
 
     #[event]
@@ -142,6 +143,11 @@ pub mod optimistic_oracle {
 
     #[abi(embed_v0)]
     impl IOptimisticOracleImpl of IOptimisticOracle<ContractState> {
+        fn default_identifier(self: @ContractState,) -> felt252 {
+            DEFAULT_IDENTIFIER
+        }
+
+
         fn assert_truth_with_defaults(
             ref self: ContractState, claim: ByteArray, asserter: ContractAddress
         ) -> felt252 {
@@ -353,6 +359,47 @@ pub mod optimistic_oracle {
             self.reentrancy_guard.end();
         }
 
+        fn get_assertion(self: @ContractState, assertion_id: felt252) -> Assertion {
+            self.assertions.read(assertion_id)
+        }
+
+        fn get_assertion_result(self: @ContractState, assertion_id: felt252) -> bool {
+            let assertion = self.assertions.read(assertion_id);
+            if (assertion.disputer != contract_address_const::<0>()
+                && assertion.escalation_manager_settings.discard_oracle) {
+                return false;
+            };
+            assert(assertion.settled, Errors::ASSERTION_NOT_SETTLED);
+            assertion.settlement_resolution
+        }
+
+        fn settle_and_get_assertion_result(ref self: ContractState, assertion_id: felt252) -> bool {
+            let assertion = self.assertions.read(assertion_id);
+            if (!assertion.settled) {
+                self.settle_assertion(assertion_id);
+            };
+            self.get_assertion_result(assertion_id)
+        }
+
+
+        fn sync_params(ref self: ContractState, identifier: felt252, currency: ContractAddress) {
+            let cached_oracle = self
+                .finder
+                .read()
+                .get_implementation_address(OracleInterfaces::ORACLE);
+            self.cached_oracle.write(cached_oracle);
+            self
+                .cached_identifiers
+                .write(
+                    identifier, self.get_identifier_whitelist().is_identifier_supported(identifier)
+                );
+            let whitelisted_currency = WhitelistedCurrency {
+                is_whitelisted: self.get_collateral_whitelist().is_on_whitelist(currency),
+                final_fee: self.get_store().compute_final_fee(currency)
+            };
+            self.cached_currencies.write(currency, whitelisted_currency);
+        }
+
 
         fn get_minimum_bond(self: @ContractState, currency: ContractAddress) -> u256 {
             let final_fee = self.cached_currencies.read(currency).final_fee;
@@ -403,24 +450,6 @@ pub mod optimistic_oracle {
                 );
         }
 
-
-        fn sync_params(ref self: ContractState, identifier: felt252, currency: ContractAddress) {
-            let cached_oracle = self
-                .finder
-                .read()
-                .get_implementation_address(OracleInterfaces::ORACLE);
-            self.cached_oracle.write(cached_oracle);
-            self
-                .cached_identifiers
-                .write(
-                    identifier, self.get_identifier_whitelist().is_identifier_supported(identifier)
-                );
-            let whitelisted_currency = WhitelistedCurrency {
-                is_whitelisted: self.get_collateral_whitelist().is_on_whitelist(currency),
-                final_fee: self.get_store().compute_final_fee(currency)
-            };
-            self.cached_currencies.write(currency, whitelisted_currency);
-        }
 
         fn get_identifier_whitelist(self: @ContractState,) -> IIdentifierWhitelistDispatcher {
             IIdentifierWhitelistDispatcher {
