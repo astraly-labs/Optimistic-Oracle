@@ -26,3 +26,10 @@ pub mod contracts {
 pub mod examples {
     pub mod prediction_market;
 }
+
+#[cfg(test)]
+pub mod tests {
+    pub mod setup;
+    pub mod test_finder;
+    pub mod test_address_whitelist;
+}
