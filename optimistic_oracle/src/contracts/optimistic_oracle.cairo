@@ -82,6 +82,7 @@ pub mod optimistic_oracle {
         AdminPropertiesSet: AdminPropertiesSet,
         AssertionSettled: AssertionSettled,
         AssertionMade: AssertionMade,
+        AssertionDisputed: AssertionDisputed, 
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -118,6 +119,13 @@ pub mod optimistic_oracle {
         pub currency: ERC20ABIDispatcher,
         pub bond: u256,
         pub identifier: felt252
+    }
+
+    #[derive(starknet::Event, Drop)]
+    pub struct AssertionDisputed {
+        pub assertion_id: felt252, 
+        pub caller: ContractAddress, 
+        pub disputer: ContractAddress, 
     }
 
 
@@ -262,7 +270,7 @@ pub mod optimistic_oracle {
             self.reentrancy_guard.start();
 
             assert(disputer != contract_address_const::<0>(), Errors::DISPUTER_CANNOT_BE_ZERO);
-            let assertion = self.assertions.read(assertion_id);
+            let mut assertion = self.assertions.read(assertion_id);
             assert(
                 assertion.asserter != contract_address_const::<0>(),
                 Errors::ASSERTION_DOES_NOT_EXIST
@@ -276,13 +284,24 @@ pub mod optimistic_oracle {
                 Errors::ASSERTION_IS_EXPIRED
             );
             assert(self.is_dispute_allowed(assertion_id), Errors::DISPUTE_NOT_ALLOWED);
-
+            assertion.disputer = disputer; 
+            self.assertions.write(assertion_id, assertion);
             assertion
                 .currency
                 .transfer_from(
                     starknet::get_caller_address(), starknet::get_contract_address(), assertion.bond
                 );
+            self.oracle_request_price(assertion_id, assertion.identifier, assertion.assertion_time.into()); 
+            self.callback_on_assertion_dispute(assertion_id); 
 
+            if (assertion.escalation_manager_settings.discard_oracle){self.callback_on_assertion_resolved(assertion_id, false); }; 
+            self.emit(
+                AssertionDisputed{
+                    assertion_id, 
+                    caller: starknet::get_caller_address(), 
+                    disputer
+                }
+            );
             self.reentrancy_guard.end();
         }
 
@@ -434,7 +453,7 @@ pub mod optimistic_oracle {
                 burned_bond_percentage <= pow(10, PROTOCOL_DECIMALS.into()),
                 Errors::BURNED_BOND_PERCENTAGE_ABOVE_100
             );
-            // assert(burned_bond_percentage > 0 , Errors::BURNED_BOND_PERCENTAGE_IS_ZERO);
+            assert(burned_bond_percentage > 0 , Errors::BURNED_BOND_PERCENTAGE_IS_ZERO);
             assert(
                 default_currency != contract_address_const::<0>(), Errors::DEFAULT_CURRENCY_IS_ZERO
             );
@@ -584,6 +603,21 @@ pub mod optimistic_oracle {
             if (em != contract_address_const::<0>()) {
                 IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: em }
                     .assertion_resolved_callback(assertion_id, asserted_truthfully);
+            }
+        }
+
+        fn callback_on_assertion_dispute(
+            ref self: ContractState, assertion_id: felt252
+        ){
+            let cr= self.assertions.read(assertion_id).callback_recipient; 
+            let em = self.get_escalation_manager(assertion_id);
+            if (cr != contract_address_const::<0>()) {
+                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: cr }
+                    .assertion_disputed_callback(assertion_id);
+            }
+            if (em != contract_address_const::<0>()) {
+                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: em }
+                    .assertion_disputed_callback(assertion_id);
             }
         }
     }
