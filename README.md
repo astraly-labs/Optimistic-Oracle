@@ -16,7 +16,7 @@ sequenceDiagram
     participant User/PredictionMarket
     participant PragmaOO
     participant IAModule
-    participant PragmaMultisig
+    participant Dispute Resolver
 
     User->>User/PredictionMarket: Submit assertion with bond
     User/PredictionMarket->>PragmaOO: Forward assertion with bond
@@ -37,8 +37,8 @@ sequenceDiagram
         User/PredictionMarket->>PragmaOO: Forward dispute
         PragmaOO->>PragmaOO: Initiate dispute resolution
         Note over PragmaOO: Dispute resolution process<br>(for now it's a multisig, <br>staking will be implemented later)
-        PragmaOO->>PragmaMultisig: Question the multisig
-        PragmaMultisig->>PragmaOO: Display final result
+        PragmaOO->>Dispute Resolver: Question the DR
+        Dispute Resolver->>PragmaOO: Display final result
         
         alt Original assertion upheld
             PragmaOO->>User: Return original bond + dispute bond (minus fees)
