@@ -10,7 +10,7 @@ pub mod prediction_market {
     };
     use optimistic_oracle::contracts::utils::keccak::compute_keccak_byte_array;
     use optimistic_oracle::contracts::mocks::full_erc20::full_erc20::{MINTER_ROLE, BURNER_ROLE};
-    use optimistic_oracle::contracts::optimistic_oracle::optimistic_oracle::DEFAULT_IDENTIFIER;
+    use optimistic_oracle::contracts::optimistic_oracle_v1::optimistic_oracle_v1::DEFAULT_IDENTIFIER;
     use core::poseidon::poseidon_hash_span;
     use optimistic_oracle::contracts::utils::convert::{byte_array_as_felt_array};
     use alexandria_data_structures::array_ext::ArrayTraitExt;
@@ -35,7 +35,7 @@ pub mod prediction_market {
         pub const MARKET_NOT_RESOLVED: felt252 = 'Market is not resolved';
     }
 
-    #[derive(Drop, starknet::Store, Serde)]
+    #[derive(Drop, starknet::Store, Serde, Clone)]
     pub struct Market {
         resolved: bool,
         asserted_outcome_id: u256,
@@ -311,10 +311,7 @@ pub mod prediction_market {
                 Errors::MARKET_DOES_NOT_EXIST
             );
             let asserted_outcome_id = compute_keccak_byte_array(@asserted_outcome);
-            assert(
-                market.outcome2_token.contract_address != contract_address_const::<0>(),
-                Errors::ASSERTION_ACTIVE_OR_RESOLVED
-            );
+            assert(market.asserted_outcome_id == 0, Errors::ASSERTION_ACTIVE_OR_RESOLVED);
             assert(
                 asserted_outcome_id == compute_keccak_byte_array(@market.outcome1)
                     || asserted_outcome_id == compute_keccak_byte_array(@market.outcome2)
@@ -323,6 +320,7 @@ pub mod prediction_market {
             );
 
             market.asserted_outcome_id = asserted_outcome_id;
+            self.markets.write(market_id, market.clone());
             let minimum_bond = self
                 .oo
                 .read()

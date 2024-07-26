@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod optimistic_oracle {
+pub mod optimistic_oracle_v1 {
     use core::starknet::event::EventEmitter;
     use optimistic_oracle::contracts::interfaces::{
         IOptimisticOracle, IFinderDispatcher, IFinderDispatcherTrait, WhitelistedCurrency,
@@ -14,7 +14,7 @@ pub mod optimistic_oracle {
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use alexandria_math::pow;
-    use optimistic_oracle::contracts::utils::constants::{OracleInterfaces, PROTOCOL_DECIMALS};
+    use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
     use optimistic_oracle::contracts::utils::ancillary_data::ancillary_data::{
         append_key_value_address, append_key_value_bytes_32, append_key_value_felt252
     };
@@ -37,6 +37,7 @@ pub mod optimistic_oracle {
     // CONSTANTS DEFINITION
     pub const DEFAULT_IDENTIFIER: felt252 = 'ASSERT_TRUTH';
     pub const NUMERICAL_TRUE: u256 = 1000000000000000000;
+    pub const BURNED_BOND_PERCENTAGE: u256 = 500000000000000000;
 
     #[storage]
     struct Storage {
@@ -74,6 +75,7 @@ pub mod optimistic_oracle {
         pub const ASSERTION_ALREADY_SETTLED: felt252 = 'Assertion already settled';
         pub const ASSERTION_NOT_EXPIRED: felt252 = 'Assertion not expired';
         pub const ASSERTION_NOT_SETTLED: felt252 = 'Assertion not settled';
+        pub const CURRENCY_NOT_DEFINED: felt252 = 'Currency not defined';
     }
 
     #[event]
@@ -82,7 +84,7 @@ pub mod optimistic_oracle {
         AdminPropertiesSet: AdminPropertiesSet,
         AssertionSettled: AssertionSettled,
         AssertionMade: AssertionMade,
-        AssertionDisputed: AssertionDisputed, 
+        AssertionDisputed: AssertionDisputed,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -123,9 +125,9 @@ pub mod optimistic_oracle {
 
     #[derive(starknet::Event, Drop)]
     pub struct AssertionDisputed {
-        pub assertion_id: felt252, 
-        pub caller: ContractAddress, 
-        pub disputer: ContractAddress, 
+        pub assertion_id: felt252,
+        pub caller: ContractAddress,
+        pub disputer: ContractAddress,
     }
 
 
@@ -144,8 +146,9 @@ pub mod optimistic_oracle {
         owner: ContractAddress
     ) {
         assert(finder != contract_address_const::<0>(), Errors::FINDER_NOT_DEFINED);
+        assert(default_currency != contract_address_const::<0>(), Errors::CURRENCY_NOT_DEFINED);
         self.finder.write(IFinderDispatcher { contract_address: finder });
-        self.set_admin_properties(default_currency, default_liveness, 0);
+        self._set_admin_properties(default_currency, default_liveness, BURNED_BOND_PERCENTAGE);
         self.ownable.initializer(owner);
     }
 
@@ -284,24 +287,28 @@ pub mod optimistic_oracle {
                 Errors::ASSERTION_IS_EXPIRED
             );
             assert(self.is_dispute_allowed(assertion_id), Errors::DISPUTE_NOT_ALLOWED);
-            assertion.disputer = disputer; 
+            assertion.disputer = disputer;
             self.assertions.write(assertion_id, assertion);
             assertion
                 .currency
                 .transfer_from(
                     starknet::get_caller_address(), starknet::get_contract_address(), assertion.bond
                 );
-            self.oracle_request_price(assertion_id, assertion.identifier, assertion.assertion_time.into()); 
-            self.callback_on_assertion_dispute(assertion_id); 
+            self
+                .oracle_request_price(
+                    assertion_id, assertion.identifier, assertion.assertion_time.into()
+                );
+            self.callback_on_assertion_dispute(assertion_id);
 
-            if (assertion.escalation_manager_settings.discard_oracle){self.callback_on_assertion_resolved(assertion_id, false); }; 
-            self.emit(
-                AssertionDisputed{
-                    assertion_id, 
-                    caller: starknet::get_caller_address(), 
-                    disputer
-                }
-            );
+            if (assertion.escalation_manager_settings.discard_oracle) {
+                self.callback_on_assertion_resolved(assertion_id, false);
+            };
+            self
+                .emit(
+                    AssertionDisputed {
+                        assertion_id, caller: starknet::get_caller_address(), disputer
+                    }
+                );
             self.reentrancy_guard.end();
         }
 
@@ -423,7 +430,7 @@ pub mod optimistic_oracle {
         fn get_minimum_bond(self: @ContractState, currency: ContractAddress) -> u256 {
             let final_fee = self.cached_currencies.read(currency).final_fee;
             let burned_bond_percentage = self.burned_bond_percentage.read();
-            (final_fee * pow(10, PROTOCOL_DECIMALS.into())) / burned_bond_percentage
+            (final_fee * 1000000000000000000) / burned_bond_percentage
         }
 
         fn stamp_assertion(self: @ContractState, assertion_id: felt252) -> ByteArray {
@@ -438,22 +445,28 @@ pub mod optimistic_oracle {
                 append_key_value_felt252(current, key, assertion_id), oo_key, asserter
             )
         }
+        fn set_admin_properties(ref self: ContractState, default_currency: ContractAddress, default_liveness: u64, burned_bond_percentage: u256) {
+            self.ownable.assert_only_owner(); 
+            self._set_admin_properties(default_currency, default_liveness, burned_bond_percentage); 
+        }
+
+       
     }
 
     #[generate_trait]
     impl OOInternalImpl of OOInternalTrait {
-        fn set_admin_properties(
+
+        fn _set_admin_properties(
             ref self: ContractState,
             default_currency: ContractAddress,
             default_liveness: u64,
             burned_bond_percentage: u256
         ) {
-            self.assert_only_owner();
             assert(
-                burned_bond_percentage <= pow(10, PROTOCOL_DECIMALS.into()),
+                burned_bond_percentage <= 1000000000000000000,
                 Errors::BURNED_BOND_PERCENTAGE_ABOVE_100
             );
-            assert(burned_bond_percentage > 0 , Errors::BURNED_BOND_PERCENTAGE_IS_ZERO);
+            assert(burned_bond_percentage > 0, Errors::BURNED_BOND_PERCENTAGE_IS_ZERO);
             assert(
                 default_currency != contract_address_const::<0>(), Errors::DEFAULT_CURRENCY_IS_ZERO
             );
@@ -468,7 +481,6 @@ pub mod optimistic_oracle {
                     }
                 );
         }
-
 
         fn get_identifier_whitelist(self: @ContractState,) -> IIdentifierWhitelistDispatcher {
             IIdentifierWhitelistDispatcher {
@@ -606,10 +618,8 @@ pub mod optimistic_oracle {
             }
         }
 
-        fn callback_on_assertion_dispute(
-            ref self: ContractState, assertion_id: felt252
-        ){
-            let cr= self.assertions.read(assertion_id).callback_recipient; 
+        fn callback_on_assertion_dispute(ref self: ContractState, assertion_id: felt252) {
+            let cr = self.assertions.read(assertion_id).callback_recipient;
             let em = self.get_escalation_manager(assertion_id);
             if (cr != contract_address_const::<0>()) {
                 IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: cr }
