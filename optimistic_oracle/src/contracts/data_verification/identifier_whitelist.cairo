@@ -22,7 +22,7 @@ pub mod identifier_whitelist {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         SupportedIdentifierAdded: SupportedIdentifierAdded,
         SupportedIdentifierRemoved: SupportedIdentifierRemoved,
         #[flat]
@@ -58,8 +58,8 @@ pub mod identifier_whitelist {
             self.ownable.assert_only_owner();
             if (!self.supported_identifiers.read(identifier)) {
                 self.supported_identifiers.write(identifier, true);
+                self.emit(SupportedIdentifierAdded { identifier });
             }
-            self.emit(SupportedIdentifierAdded { identifier });
         }
 
         /// Remove the provided identifier as supported identifier 
@@ -72,8 +72,8 @@ pub mod identifier_whitelist {
             self.ownable.assert_only_owner();
             if (self.supported_identifiers.read(identifier)) {
                 self.supported_identifiers.write(identifier, false);
+                self.emit(SupportedIdentifierRemoved { identifier });
             }
-            self.emit(SupportedIdentifierRemoved { identifier });
         }
 
         /// Check if a given identifier is supported or not.  
