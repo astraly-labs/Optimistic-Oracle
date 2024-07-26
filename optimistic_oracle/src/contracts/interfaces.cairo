@@ -83,6 +83,13 @@ pub trait IOptimisticOracle<TContractState> {
     fn settle_and_get_assertion_result(ref self: TContractState, assertion_id: felt252) -> bool;
 
     fn get_assertion_result(self: @TContractState, assertion_id: felt252) -> bool;
+
+    fn set_admin_properties(
+        ref self: TContractState,
+        default_currency: ContractAddress,
+        default_liveness: u64,
+        burned_bond_percentage: u256
+    );
 }
 #[starknet::interface]
 pub trait IFinder<TContractState> {

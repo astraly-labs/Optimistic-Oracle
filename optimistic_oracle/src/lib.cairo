@@ -1,6 +1,6 @@
 pub mod contracts {
     pub mod interfaces;
-    pub mod optimistic_oracle;
+    pub mod optimistic_oracle_v1;
     pub mod finder;
     pub mod utils {
         pub mod constants;
@@ -32,4 +32,7 @@ pub mod tests {
     pub mod setup;
     pub mod test_finder;
     pub mod test_address_whitelist;
+    pub mod test_identifier_whitelist;
+    pub test_oracle_ancillary; 
+    // pub mod test_optimistic_oracle;
 }
