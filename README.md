@@ -88,13 +88,12 @@ sequenceDiagram
         Website->>Website: Update assertion status
         Website->>User: Notify user of new assertion status
     else AI background entity
-        AIAgent->>AIAgent: listen to assertion events and checks for validity if id not stored
+        AIAgent->>ListenerDB: listen to assertion events and checks for validity if id not stored
         alt assertion is valid
-            AIAgent->>AIAgent: store the true id and move on
+            AIAgent->>AIAgent: store the id as and move on
         else assertion is invalid
             AIAgent->>AIAgent: store the false id and start the dispute process 
             Note right of AIAgent: Another entity with funds should initiate the dispute process
         end
-        AIAgent->>AIAgent: sleeps for xs
     end
 ```
