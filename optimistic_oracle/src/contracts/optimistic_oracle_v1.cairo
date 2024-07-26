@@ -445,17 +445,19 @@ pub mod optimistic_oracle_v1 {
                 append_key_value_felt252(current, key, assertion_id), oo_key, asserter
             )
         }
-        fn set_admin_properties(ref self: ContractState, default_currency: ContractAddress, default_liveness: u64, burned_bond_percentage: u256) {
-            self.ownable.assert_only_owner(); 
-            self._set_admin_properties(default_currency, default_liveness, burned_bond_percentage); 
+        fn set_admin_properties(
+            ref self: ContractState,
+            default_currency: ContractAddress,
+            default_liveness: u64,
+            burned_bond_percentage: u256
+        ) {
+            self.ownable.assert_only_owner();
+            self._set_admin_properties(default_currency, default_liveness, burned_bond_percentage);
         }
-
-       
     }
 
     #[generate_trait]
     impl OOInternalImpl of OOInternalTrait {
-
         fn _set_admin_properties(
             ref self: ContractState,
             default_currency: ContractAddress,
