@@ -8,7 +8,6 @@ pub mod mock_oracle_ancillary {
     };
     use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
     use optimistic_oracle::contracts::utils::convert::convert_byte_array_to_felt_array;
-    use alexandria_data_structures::array_ext::ArrayTraitExt;
     use core::poseidon::poseidon_hash_span;
 
     #[derive(starknet::Store, Drop)]
@@ -26,9 +25,9 @@ pub mod mock_oracle_ancillary {
 
     #[derive(starknet::Store, Drop, Serde)]
     pub struct QueryPoint {
-        identifier: felt252,
-        time: u256,
-        ancillary_data: ByteArray
+        pub identifier: felt252,
+        pub time: u256,
+        pub ancillary_data: ByteArray
     }
 
     pub mod Errors {
@@ -59,7 +58,7 @@ pub mod mock_oracle_ancillary {
     }
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         PriceRequestAdded: PriceRequestAdded,
         PushedPrice: PushedPrice
     }
@@ -172,10 +171,25 @@ pub mod mock_oracle_ancillary {
                 );
             let query_index = self.query_indices.read(request_id);
             assert(query_index.is_valid, Errors::PRICE_NOT_REQUESTED);
-            // TODO: Check if storing index as 0 is not problematic for the process (in such case, replace by Option::None)
-            self
-                .query_indices
-                .write(request_id, QueryIndex { is_valid: false, index: Option::None });
+
+            let index_to_replace = match query_index.index{
+                Option::Some(index) => {index}, 
+                Option::None => {
+                    panic(array![Errors::PRICE_NOT_REQUESTED]);
+                    0
+                }
+            };
+            self.query_indices.write(request_id, QueryIndex { is_valid: false, index: Option::None });
+            let last_index = self.requested_prices_len.read() - 1;
+            if last_index != index_to_replace {
+                let query_to_copy = self.requested_prices.read(last_index);
+                let id = encode_price_request(query_to_copy.identifier, query_to_copy.time, @query_to_copy.ancillary_data);
+                let mut query = self.query_indices.read(id);
+                query.index = Option::Some(index_to_replace); 
+                self.query_indices.write(id, query);
+                self.requested_prices.write(index_to_replace,query_to_copy);
+                self.requested_prices_len.write(self.requested_prices_len.read() - 1);
+            }
             self
                 .emit(
                     PushedPrice {
@@ -228,11 +242,18 @@ pub mod mock_oracle_ancillary {
     fn encode_price_request(
         identifier: felt252, time: u256, ancillary_data: @ByteArray
     ) -> felt252 {
-        let input: Array<felt252> = array![identifier, time.high.into(), time.low.into()];
+        let mut input: Array<felt252> = array![identifier, time.high.into(), time.low.into()];
         let mut ancillary_data_felt: Array<felt252> = convert_byte_array_to_felt_array(
             ancillary_data
         );
-        input.concat(@ancillary_data_felt);
+        let mut cur_idx = 0;
+        loop {
+            if (cur_idx == ancillary_data_felt.len()) {
+                break;
+            }
+            input.append(*ancillary_data_felt.at(cur_idx));
+            cur_idx += 1;
+        };
         poseidon_hash_span(input.span())
     }
 }

@@ -4,7 +4,8 @@ use snforge_std::{
 use starknet::{ContractAddress, contract_address_const, EthAddress};
 use optimistic_oracle::contracts::interfaces::{
     IFinderDispatcher, IOptimisticOracleDispatcher, IAddressWhitelistDispatcher,
-    IIdentifierWhitelistDispatcher
+    IIdentifierWhitelistDispatcher, IOracleAncillaryDispatcher,
+    IMockOracleAncillaryConfigurationDispatcher
 };
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher};
 use openzeppelin::utils::serde::SerializedAppend;
@@ -97,5 +98,21 @@ pub fn setup_optimistic_oracle(default_liveness: u64) -> (IOptimisticOracleDispa
     let (optimistic_oracle_addr, _) = res.unwrap();
     let mut spy = spy_events(SpyOn::One(optimistic_oracle_addr));
     (IOptimisticOracleDispatcher { contract_address: optimistic_oracle_addr }, spy)
+}
+
+
+pub fn setup_mock_oracle_ancillary(
+    finder: IFinderDispatcher
+) -> (IOracleAncillaryDispatcher, IMockOracleAncillaryConfigurationDispatcher, EventSpy) {
+    let oracle_ancillary_class = declare("mock_oracle_ancillary").unwrap();
+    let (oracle_ancillary_addr, _) = oracle_ancillary_class
+        .deploy(@array![finder.contract_address.into()])
+        .unwrap();
+    let mut spy = spy_events(SpyOn::One(oracle_ancillary_addr));
+    (
+        IOracleAncillaryDispatcher { contract_address: oracle_ancillary_addr },
+        IMockOracleAncillaryConfigurationDispatcher { contract_address: oracle_ancillary_addr },
+        spy
+    )
 }
 
