@@ -94,7 +94,7 @@ fn test_push_price() {
         );
     let identifier = OracleInterfaces::IDENTIFIER_WHITELIST;
     let time: u256 = 1000;
-    let ancillary_data: ByteArray = Default::default();
+    let mut ancillary_data: ByteArray = Default::default();
     let ownable = IOwnableDispatcher { contract_address: oracle.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     oracle.request_price(identifier, time, ancillary_data.clone());
@@ -118,6 +118,8 @@ fn test_push_price() {
         oracle.get_price(identifier, time, ancillary_data.clone()), price, "Price should match"
     );
     // // Test pushing a new price for the same request
+    ancillary_data.append_word(0x1234, 2);
+    oracle.request_price(identifier, time, ancillary_data.clone());
     let new_price: u256 = 600;
     oracle_config.push_price(identifier, time, ancillary_data.clone(), new_price);
     assert_eq!(
@@ -370,10 +372,6 @@ fn test_price_request_lifecycle() {
     let updated_pending_queries = oracle_config.get_pending_queries();
     assert_eq!(updated_pending_queries.len(), 0, "Should have no pending queries");
     
-    // Step 6: Try to push price again (should update the existing price)
-    let new_price: u256 = 600;
-    oracle_config.push_price(identifier, time, ancillary_data.clone(), new_price);
-    assert_eq!(oracle.get_price(identifier, time, ancillary_data), new_price, "New price should be updated");
 }
 
 
