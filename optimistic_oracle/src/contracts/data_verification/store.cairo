@@ -65,5 +65,16 @@ pub mod store {
             self.final_fee.write(currency, new_final_fee);
             self.emit(NewFinalFee { new_final_fee })
         }
+
+        fn withdraw_funds(ref self: ContractState, receiver: ContractAddress) {
+            self.ownable.assert_only_owner();
+            let eth_dispatcher = ERC20ABIDispatcher {
+                contract_address: 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 // ETH Contract Address
+                    .try_into()
+                    .unwrap()
+            };
+            let balance = eth_dispatcher.balanceOf(starknet::get_contract_address());
+            eth_dispatcher.transfer(receiver, balance);
+        }
     }
 }
