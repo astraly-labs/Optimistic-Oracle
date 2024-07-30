@@ -126,11 +126,9 @@ pub trait IAddressWhitelist<TContractState> {
 pub trait IStore<TContractState> {
     fn pay_oracle_fees(self: @TContractState, erc20_address: ContractAddress, amount: u256);
 
-    fn compute_regular_fee(
-        self: @TContractState, start_time: u256, end_time: u256, pfc: u256
-    ) -> (u256, u256);
-
     fn compute_final_fee(self: @TContractState, currency: ContractAddress) -> u256;
+
+    fn set_final_fee(ref self: TContractState, currency:ContractAddress, new_final_fee: u256);
 }
 
 #[starknet::interface]
