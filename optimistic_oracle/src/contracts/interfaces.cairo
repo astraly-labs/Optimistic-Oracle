@@ -128,7 +128,7 @@ pub trait IStore<TContractState> {
 
     fn compute_final_fee(self: @TContractState, currency: ContractAddress) -> u256;
 
-    fn set_final_fee(ref self: TContractState, currency:ContractAddress, new_final_fee: u256);
+    fn set_final_fee(ref self: TContractState, currency: ContractAddress, new_final_fee: u256);
 }
 
 #[starknet::interface]

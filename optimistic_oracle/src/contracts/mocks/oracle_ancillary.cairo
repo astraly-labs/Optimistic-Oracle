@@ -95,9 +95,7 @@ pub mod mock_oracle_ancillary {
                     .query_indices
                     .write(
                         request_id,
-                        QueryIndex {
-                            is_valid: true, index: Option::Some(requested_price_index)
-                        }
+                        QueryIndex { is_valid: true, index: Option::Some(requested_price_index) }
                     );
                 let cloned_ancillary_data = ancillary_data.clone();
                 self
@@ -172,23 +170,27 @@ pub mod mock_oracle_ancillary {
             let query_index = self.query_indices.read(request_id);
             assert(query_index.is_valid, Errors::PRICE_NOT_REQUESTED);
 
-            let index_to_replace = match query_index.index{
-                Option::Some(index) => {index}, 
+            let index_to_replace = match query_index.index {
+                Option::Some(index) => { index },
                 Option::None => {
                     panic(array![Errors::PRICE_NOT_REQUESTED]);
                     0
                 }
             };
-            self.query_indices.write(request_id, QueryIndex { is_valid: false, index: Option::None });
+            self
+                .query_indices
+                .write(request_id, QueryIndex { is_valid: false, index: Option::None });
             self.requested_prices_len.write(self.requested_prices_len.read() - 1);
             let last_index = self.requested_prices_len.read();
             if last_index != index_to_replace {
                 let query_to_copy = self.requested_prices.read(last_index);
-                let id = encode_price_request(query_to_copy.identifier, query_to_copy.time, @query_to_copy.ancillary_data);
+                let id = encode_price_request(
+                    query_to_copy.identifier, query_to_copy.time, @query_to_copy.ancillary_data
+                );
                 let mut query = self.query_indices.read(id);
-                query.index = Option::Some(index_to_replace); 
+                query.index = Option::Some(index_to_replace);
                 self.query_indices.write(id, query);
-                self.requested_prices.write(index_to_replace,query_to_copy);
+                self.requested_prices.write(index_to_replace, query_to_copy);
             }
             self
                 .emit(

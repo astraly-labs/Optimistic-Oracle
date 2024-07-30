@@ -1,12 +1,14 @@
 use snforge_std::{
-    declare, ContractClassTrait, start_prank, stop_prank,CheatTarget, EventSpy, EventAssertions, spy_events, SpyOn
+    declare, ContractClassTrait, start_prank, stop_prank, CheatTarget, EventSpy, EventAssertions,
+    spy_events, SpyOn
 };
 
 use starknet::{ContractAddress, contract_address_const, EthAddress};
 use optimistic_oracle::contracts::interfaces::{
-    IFinderDispatcher, IFinderDispatcherTrait,IOptimisticOracleDispatcher, IAddressWhitelistDispatcher,IAddressWhitelistDispatcherTrait,
-    IIdentifierWhitelistDispatcher,IIdentifierWhitelistDispatcherTrait, IOracleAncillaryDispatcher,
-    IMockOracleAncillaryConfigurationDispatcher,IStoreDispatcher, IStoreDispatcherTrait, 
+    IFinderDispatcher, IFinderDispatcherTrait, IOptimisticOracleDispatcher,
+    IAddressWhitelistDispatcher, IAddressWhitelistDispatcherTrait, IIdentifierWhitelistDispatcher,
+    IIdentifierWhitelistDispatcherTrait, IOracleAncillaryDispatcher,
+    IMockOracleAncillaryConfigurationDispatcher, IStoreDispatcher, IStoreDispatcherTrait,
 };
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher};
 use openzeppelin::utils::serde::SerializedAppend;
@@ -16,7 +18,7 @@ use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
 
 pub const INITIAL_SUPPLY: u256 = 10000000000;
 pub const DEFAULT_LIVENESS: u64 = 1000;
-pub const FINAL_FEE: u256 = 10000; 
+pub const FINAL_FEE: u256 = 10000;
 
 
 pub fn OWNER() -> ContractAddress {
@@ -36,14 +38,16 @@ fn SYMBOL() -> ByteArray {
 
 pub fn setup_mock_erc20() -> ERC20ABIDispatcher {
     let mock_erc20_class = declare("mock_erc20").unwrap();
-    let (mock_erc20_addr, _) = mock_erc20_class.deploy(@array![INITIAL_SUPPLY.low.into(),INITIAL_SUPPLY.high.into(), OWNER().into()]).unwrap();
+    let (mock_erc20_addr, _) = mock_erc20_class
+        .deploy(@array![INITIAL_SUPPLY.low.into(), INITIAL_SUPPLY.high.into(), OWNER().into()])
+        .unwrap();
     ERC20ABIDispatcher { contract_address: mock_erc20_addr }
 }
 
 pub fn setup_store() -> IStoreDispatcher {
-    let store_class = declare("store").unwrap(); 
+    let store_class = declare("store").unwrap();
     let (store_addr, _) = store_class.deploy(@array![OWNER().into()]).unwrap();
-    IStoreDispatcher{contract_address: store_addr}
+    IStoreDispatcher { contract_address: store_addr }
 }
 
 pub fn setup_finder() -> (IFinderDispatcher, EventSpy) {
@@ -71,7 +75,9 @@ pub fn setup_identifier_whitelist() -> (IIdentifierWhitelistDispatcher, EventSpy
     (IIdentifierWhitelistDispatcher { contract_address: identifier_whitelist_addr }, spy)
 }
 
-pub fn setup_optimistic_oracle(erc20: ERC20ABIDispatcher, finder: IFinderDispatcher, default_liveness: u64) -> (IOptimisticOracleDispatcher, EventSpy) {
+pub fn setup_optimistic_oracle(
+    erc20: ERC20ABIDispatcher, finder: IFinderDispatcher, default_liveness: u64
+) -> (IOptimisticOracleDispatcher, EventSpy) {
     let optimistic_oracle_class = declare("optimistic_oracle_v1").unwrap();
     let res = optimistic_oracle_class
         .deploy(
@@ -107,15 +113,15 @@ pub fn setup_mock_oracle_ancillary(
 }
 
 
-pub fn oo_full_config() -> IOptimisticOracleDispatcher{
+pub fn oo_full_config() -> IOptimisticOracleDispatcher {
     let liveness = 30;
-    let (finder, _) = setup_finder(); 
-    let erc20 = setup_mock_erc20(); 
+    let (finder, _) = setup_finder();
+    let erc20 = setup_mock_erc20();
     let (oracle, _, _) = setup_mock_oracle_ancillary(finder);
-    let store = setup_store(); 
+    let store = setup_store();
     let ownable = IOwnableDispatcher { contract_address: store.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    store.set_final_fee(erc20.contract_address, FINAL_FEE); 
+    store.set_final_fee(erc20.contract_address, FINAL_FEE);
     let (address_whitelist, _) = setup_address_whitelist();
     let (identifier_whitelist, _) = setup_identifier_whitelist();
     let ownable = IOwnableDispatcher { contract_address: identifier_whitelist.contract_address };
@@ -126,10 +132,16 @@ pub fn oo_full_config() -> IOptimisticOracleDispatcher{
     address_whitelist.add_to_whitelist(erc20.contract_address);
     let ownable = IOwnableDispatcher { contract_address: finder.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    finder.change_implementation_address(OracleInterfaces::IDENTIFIER_WHITELIST, identifier_whitelist.contract_address);
-    finder.change_implementation_address(OracleInterfaces::ORACLE,oracle.contract_address);
-    finder.change_implementation_address(OracleInterfaces::COLLATERAL_WHITELIST, address_whitelist.contract_address); 
-    finder.change_implementation_address(OracleInterfaces::STORE, store.contract_address); 
+    finder
+        .change_implementation_address(
+            OracleInterfaces::IDENTIFIER_WHITELIST, identifier_whitelist.contract_address
+        );
+    finder.change_implementation_address(OracleInterfaces::ORACLE, oracle.contract_address);
+    finder
+        .change_implementation_address(
+            OracleInterfaces::COLLATERAL_WHITELIST, address_whitelist.contract_address
+        );
+    finder.change_implementation_address(OracleInterfaces::STORE, store.contract_address);
     let (oo, _) = setup_optimistic_oracle(erc20, finder, liveness);
     oo
 }

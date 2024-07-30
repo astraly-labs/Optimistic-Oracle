@@ -35,6 +35,6 @@ pub mod tests {
     pub mod test_finder;
     pub mod test_address_whitelist;
     pub mod test_identifier_whitelist;
-     pub mod test_oracle_ancillary;
+    pub mod test_oracle_ancillary;
     pub mod test_optimistic_oracle;
 }

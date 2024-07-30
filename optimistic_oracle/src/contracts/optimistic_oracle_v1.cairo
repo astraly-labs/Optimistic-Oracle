@@ -205,7 +205,10 @@ pub mod optimistic_oracle_v1 {
             );
             assert(asserter != contract_address_const::<0>(), Errors::ASSERTER_CANNOT_BE_ZERO);
             let assertion = self.assertions.read(assertion_id);
-            assert(assertion.asserter == contract_address_const::<0>(), Errors::ASSERTION_ALREADY_EXISTS);
+            assert(
+                assertion.asserter == contract_address_const::<0>(),
+                Errors::ASSERTION_ALREADY_EXISTS
+            );
             assert(self.validate_and_cache_identifier(identifier), Errors::UNSUPPORTED_IDENTIFIER);
             assert(
                 self.validate_and_cache_currency(currency.contract_address),
@@ -218,7 +221,10 @@ pub mod optimistic_oracle_v1 {
             let caller_address = starknet::get_caller_address();
             let contract_address = starknet::get_contract_address();
 
-            assert(currency.allowance(caller_address, contract_address)>=bond, Errors::INSUFFICIENT_ALLOWANCE);
+            assert(
+                currency.allowance(caller_address, contract_address) >= bond,
+                Errors::INSUFFICIENT_ALLOWANCE
+            );
             let assertion_policy = self.get_assertion_policy(assertion_id);
             assert(!assertion_policy.block_assertion, Errors::ASSERTION_NOT_ALLOWED);
             let modified_em_settings = EscalationManagerSettings {
@@ -247,7 +253,7 @@ pub mod optimistic_oracle_v1 {
                         expiration_time: time + liveness
                     }
                 );
-            currency.transfer_from(caller_address,contract_address, bond);
+            currency.transfer_from(caller_address, contract_address, bond);
             self
                 .emit(
                     AssertionMade {
