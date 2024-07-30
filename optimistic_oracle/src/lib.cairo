@@ -10,6 +10,7 @@ pub mod contracts {
     }
     pub mod data_verification {
         pub mod identifier_whitelist;
+        pub mod store;
     }
     pub mod escalation_manager {
         pub mod base_escalation_manager;
@@ -21,6 +22,7 @@ pub mod contracts {
     pub mod mocks {
         pub mod oracle_ancillary;
         pub mod full_erc20;
+        pub mod mock_erc20;
     }
 }
 pub mod examples {
@@ -33,6 +35,6 @@ pub mod tests {
     pub mod test_finder;
     pub mod test_address_whitelist;
     pub mod test_identifier_whitelist;
-    pub mod test_oracle_ancillary;
-// pub mod test_optimistic_oracle;
+     pub mod test_oracle_ancillary;
+    pub mod test_optimistic_oracle;
 }

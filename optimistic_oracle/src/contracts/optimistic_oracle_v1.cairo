@@ -76,6 +76,7 @@ pub mod optimistic_oracle_v1 {
         pub const ASSERTION_NOT_EXPIRED: felt252 = 'Assertion not expired';
         pub const ASSERTION_NOT_SETTLED: felt252 = 'Assertion not settled';
         pub const CURRENCY_NOT_DEFINED: felt252 = 'Currency not defined';
+        pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
     }
 
     #[event]
@@ -203,8 +204,8 @@ pub mod optimistic_oracle_v1 {
                 identifier
             );
             assert(asserter != contract_address_const::<0>(), Errors::ASSERTER_CANNOT_BE_ZERO);
-            let assertion = self.assertions.read(assertion_id).asserter;
-            assert(assertion == contract_address_const::<0>(), Errors::ASSERTION_ALREADY_EXISTS);
+            let assertion = self.assertions.read(assertion_id);
+            assert(assertion.asserter == contract_address_const::<0>(), Errors::ASSERTION_ALREADY_EXISTS);
             assert(self.validate_and_cache_identifier(identifier), Errors::UNSUPPORTED_IDENTIFIER);
             assert(
                 self.validate_and_cache_currency(currency.contract_address),
@@ -214,15 +215,17 @@ pub mod optimistic_oracle_v1 {
                 bond >= self.get_minimum_bond(currency.contract_address),
                 Errors::BOND_AMOUNT_TOO_LOW
             );
+            let caller_address = starknet::get_caller_address();
+            let contract_address = starknet::get_contract_address();
+
+            assert(currency.allowance(caller_address, contract_address)>=bond, Errors::INSUFFICIENT_ALLOWANCE);
             let assertion_policy = self.get_assertion_policy(assertion_id);
             assert(!assertion_policy.block_assertion, Errors::ASSERTION_NOT_ALLOWED);
-            let caller_address = starknet::get_caller_address();
-
             let modified_em_settings = EscalationManagerSettings {
                 arbitrate_via_escalation_manager: assertion_policy.arbitrate_via_escalation_manager,
                 discard_oracle: assertion_policy.discard_oracle,
                 validate_disputers: assertion_policy.validate_disputers,
-                asserting_caller: starknet::get_caller_address(),
+                asserting_caller: caller_address,
                 escalation_manager: escalation_manager
             };
             self
@@ -244,8 +247,7 @@ pub mod optimistic_oracle_v1 {
                         expiration_time: time + liveness
                     }
                 );
-            let contract_address = starknet::get_contract_address();
-            currency.transfer_from(caller_address, contract_address, bond);
+            currency.transfer_from(caller_address,contract_address, bond);
             self
                 .emit(
                     AssertionMade {
