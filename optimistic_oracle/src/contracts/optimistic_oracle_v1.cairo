@@ -358,37 +358,37 @@ pub mod optimistic_oracle_v1 {
                     assertion.settlement_resolution = false;
                 } else {
                     assertion.settlement_resolution = resolved_price == NUMERICAL_TRUE;
-                    let bond_recipient = if (resolved_price == NUMERICAL_TRUE) {
-                        assertion.asserter
-                    } else {
-                        assertion.disputer
-                    };
-                    let oracle_fee = (self.burned_bond_percentage.read() * assertion.bond)
-                        / 1000000000000000000;
-                    let bond_recipient_amount = assertion.bond * 2 - oracle_fee;
-                    assertion.currency.transfer(self.get_store().contract_address, oracle_fee);
-                    assertion.currency.transfer(bond_recipient, bond_recipient_amount);
-
-                    if (!assertion.escalation_manager_settings.discard_oracle) {
-                        self
-                            .callback_on_assertion_resolved(
-                                assertion_id, assertion.settlement_resolution
-                            );
-                    }
-
-                    self.assertions.write(assertion_id, assertion);
-
-                    self
-                        .emit(
-                            AssertionSettled {
-                                assertion_id,
-                                bond_recipient: bond_recipient,
-                                disputed: true,
-                                settlement_resolution: assertion.settlement_resolution,
-                                settle_caller: starknet::get_caller_address(),
-                            }
-                        )
                 }
+                let bond_recipient = if (resolved_price == NUMERICAL_TRUE) {
+                    assertion.asserter
+                } else {
+                    assertion.disputer
+                };
+                let oracle_fee = (self.burned_bond_percentage.read() * assertion.bond)
+                    / 1000000000000000000;
+                let bond_recipient_amount = assertion.bond * 2 - oracle_fee;
+                assertion.currency.transfer(self.get_store().contract_address, oracle_fee);
+                assertion.currency.transfer(bond_recipient, bond_recipient_amount);
+
+                if (!assertion.escalation_manager_settings.discard_oracle) {
+                    self
+                        .callback_on_assertion_resolved(
+                            assertion_id, assertion.settlement_resolution
+                        );
+                }
+
+                self.assertions.write(assertion_id, assertion);
+
+                self
+                    .emit(
+                        AssertionSettled {
+                            assertion_id,
+                            bond_recipient: bond_recipient,
+                            disputed: true,
+                            settlement_resolution: assertion.settlement_resolution,
+                            settle_caller: starknet::get_caller_address(),
+                        }
+                    )
             }
             self.reentrancy_guard.end();
         }

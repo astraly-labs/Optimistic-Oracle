@@ -163,4 +163,21 @@ fn test_oo_assert_truth_with_default() {
     // once dispute is done, we can settle and conclude the process
 
     oo.settle_assertion(assertion_id);
+    let assertion = oo.get_assertion(assertion_id);
+    assert_eq!(assertion.asserter, OWNER());
+    assert_eq!(assertion.disputer, DISPUTER());
+    assert_eq!(assertion.callback_recipient, contract_address_const::<0>());
+    assert_eq!(assertion.currency.contract_address, erc20.contract_address);
+    assert_eq!(assertion.domain_id, 0);
+    assert_eq!(assertion.identifier, 'ASSERT_TRUTH');
+    assert_eq!(assertion.bond, minimum_bond);
+    assert_eq!(assertion.settled, true);
+    assert_eq!(assertion.settlement_resolution, true);
+    assert_eq!(assertion.assertion_time, time);
+    assert_eq!(assertion.expiration_time, time + liveness);
+    assert_eq!(erc20.balanceOf(DISPUTER()), 0);
+    // So the owner balance should be the initial amount -  the amount sent to the oracle (because the owner sent minimum_bond to the disputer before the dispute process)
+    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - minimum_bond / 2);
+    assert_eq!(erc20.balanceOf(store.contract_address), minimum_bond / 2);
+    stop_warp(CheatTarget::One(oo.contract_address));
 }
