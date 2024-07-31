@@ -51,70 +51,6 @@ impl<P: starknet::providers::Provider + Sync> mock_oracle_ancillaryReader<P> {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct QueryPoint {
-    pub identifier: starknet::core::types::FieldElement,
-    pub time: cainome::cairo_serde::U256,
-    pub ancillary_data: cainome::cairo_serde::ByteArray,
-}
-impl cainome::cairo_serde::CairoSerde for QueryPoint {
-    type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = None;
-    #[inline]
-    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        let mut __size = 0;
-        __size
-            += starknet::core::types::FieldElement::cairo_serialized_size(
-                &__rust.identifier,
-            );
-        __size += cainome::cairo_serde::U256::cairo_serialized_size(&__rust.time);
-        __size
-            += cainome::cairo_serde::ByteArray::cairo_serialized_size(
-                &__rust.ancillary_data,
-            );
-        __size
-    }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out
-            .extend(
-                starknet::core::types::FieldElement::cairo_serialize(&__rust.identifier),
-            );
-        __out.extend(cainome::cairo_serde::U256::cairo_serialize(&__rust.time));
-        __out
-            .extend(
-                cainome::cairo_serde::ByteArray::cairo_serialize(&__rust.ancillary_data),
-            );
-        __out
-    }
-    fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
-        __offset: usize,
-    ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let mut __offset = __offset;
-        let identifier = starknet::core::types::FieldElement::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += starknet::core::types::FieldElement::cairo_serialized_size(&identifier);
-        let time = cainome::cairo_serde::U256::cairo_deserialize(__felts, __offset)?;
-        __offset += cainome::cairo_serde::U256::cairo_serialized_size(&time);
-        let ancillary_data = cainome::cairo_serde::ByteArray::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ByteArray::cairo_serialized_size(&ancillary_data);
-        Ok(QueryPoint {
-            identifier,
-            time,
-            ancillary_data,
-        })
-    }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct PriceRequestAdded {
     pub requester: cainome::cairo_serde::ContractAddress,
     pub identifier: starknet::core::types::FieldElement,
@@ -207,6 +143,116 @@ impl cainome::cairo_serde::CairoSerde for PriceRequestAdded {
             time,
             ancillary_data,
             request_id,
+        })
+    }
+}
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub struct QueryPoint {
+    pub identifier: starknet::core::types::FieldElement,
+    pub time: cainome::cairo_serde::U256,
+    pub ancillary_data: cainome::cairo_serde::ByteArray,
+}
+impl cainome::cairo_serde::CairoSerde for QueryPoint {
+    type RustType = Self;
+    const SERIALIZED_SIZE: std::option::Option<usize> = None;
+    #[inline]
+    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
+        let mut __size = 0;
+        __size
+            += starknet::core::types::FieldElement::cairo_serialized_size(
+                &__rust.identifier,
+            );
+        __size += cainome::cairo_serde::U256::cairo_serialized_size(&__rust.time);
+        __size
+            += cainome::cairo_serde::ByteArray::cairo_serialized_size(
+                &__rust.ancillary_data,
+            );
+        __size
+    }
+    fn cairo_serialize(
+        __rust: &Self::RustType,
+    ) -> Vec<starknet::core::types::FieldElement> {
+        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+        __out
+            .extend(
+                starknet::core::types::FieldElement::cairo_serialize(&__rust.identifier),
+            );
+        __out.extend(cainome::cairo_serde::U256::cairo_serialize(&__rust.time));
+        __out
+            .extend(
+                cainome::cairo_serde::ByteArray::cairo_serialize(&__rust.ancillary_data),
+            );
+        __out
+    }
+    fn cairo_deserialize(
+        __felts: &[starknet::core::types::FieldElement],
+        __offset: usize,
+    ) -> cainome::cairo_serde::Result<Self::RustType> {
+        let mut __offset = __offset;
+        let identifier = starknet::core::types::FieldElement::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += starknet::core::types::FieldElement::cairo_serialized_size(&identifier);
+        let time = cainome::cairo_serde::U256::cairo_deserialize(__felts, __offset)?;
+        __offset += cainome::cairo_serde::U256::cairo_serialized_size(&time);
+        let ancillary_data = cainome::cairo_serde::ByteArray::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ByteArray::cairo_serialized_size(&ancillary_data);
+        Ok(QueryPoint {
+            identifier,
+            time,
+            ancillary_data,
+        })
+    }
+}
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub struct IIdentifierWhitelistDispatcher {
+    pub contract_address: cainome::cairo_serde::ContractAddress,
+}
+impl cainome::cairo_serde::CairoSerde for IIdentifierWhitelistDispatcher {
+    type RustType = Self;
+    const SERIALIZED_SIZE: std::option::Option<usize> = None;
+    #[inline]
+    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
+        let mut __size = 0;
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.contract_address,
+            );
+        __size
+    }
+    fn cairo_serialize(
+        __rust: &Self::RustType,
+    ) -> Vec<starknet::core::types::FieldElement> {
+        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(
+                    &__rust.contract_address,
+                ),
+            );
+        __out
+    }
+    fn cairo_deserialize(
+        __felts: &[starknet::core::types::FieldElement],
+        __offset: usize,
+    ) -> cainome::cairo_serde::Result<Self::RustType> {
+        let mut __offset = __offset;
+        let contract_address = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &contract_address,
+            );
+        Ok(IIdentifierWhitelistDispatcher {
+            contract_address,
         })
     }
 }
@@ -309,52 +355,6 @@ impl cainome::cairo_serde::CairoSerde for PushedPrice {
             ancillary_data,
             price,
             request_id,
-        })
-    }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct IIdentifierWhitelistDispatcher {
-    pub contract_address: cainome::cairo_serde::ContractAddress,
-}
-impl cainome::cairo_serde::CairoSerde for IIdentifierWhitelistDispatcher {
-    type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = None;
-    #[inline]
-    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        let mut __size = 0;
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.contract_address,
-            );
-        __size
-    }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(
-                    &__rust.contract_address,
-                ),
-            );
-        __out
-    }
-    fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
-        __offset: usize,
-    ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let mut __offset = __offset;
-        let contract_address = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &contract_address,
-            );
-        Ok(IIdentifierWhitelistDispatcher {
-            contract_address,
         })
     }
 }
@@ -686,50 +686,6 @@ impl TryFrom<starknet::core::types::EmittedEvent> for Event {
 impl<A: starknet::accounts::ConnectedAccount + Sync> mock_oracle_ancillary<A> {
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
-    pub fn has_price(
-        &self,
-        identifier: &starknet::core::types::FieldElement,
-        time: &cainome::cairo_serde::U256,
-        ancillary_data: &cainome::cairo_serde::ByteArray,
-    ) -> cainome::cairo_serde::call::FCall<A::Provider, bool> {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        __calldata
-            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
-        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
-        __calldata
-            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
-        let __call = starknet::core::types::FunctionCall {
-            contract_address: self.address,
-            entry_point_selector: starknet::macros::selector!("has_price"),
-            calldata: __calldata,
-        };
-        cainome::cairo_serde::call::FCall::new(__call, self.provider())
-    }
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::too_many_arguments)]
-    pub fn get_price(
-        &self,
-        identifier: &starknet::core::types::FieldElement,
-        time: &cainome::cairo_serde::U256,
-        ancillary_data: &cainome::cairo_serde::ByteArray,
-    ) -> cainome::cairo_serde::call::FCall<A::Provider, cainome::cairo_serde::U256> {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        __calldata
-            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
-        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
-        __calldata
-            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
-        let __call = starknet::core::types::FunctionCall {
-            contract_address: self.address,
-            entry_point_selector: starknet::macros::selector!("get_price"),
-            calldata: __calldata,
-        };
-        cainome::cairo_serde::call::FCall::new(__call, self.provider())
-    }
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::too_many_arguments)]
     pub fn get_identifier_whitelist(
         &self,
     ) -> cainome::cairo_serde::call::FCall<A::Provider, IIdentifierWhitelistDispatcher> {
@@ -777,12 +733,12 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> mock_oracle_ancillary<A> {
     }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
-    pub fn request_price_getcall(
+    pub fn has_price(
         &self,
         identifier: &starknet::core::types::FieldElement,
         time: &cainome::cairo_serde::U256,
         ancillary_data: &cainome::cairo_serde::ByteArray,
-    ) -> starknet::accounts::Call {
+    ) -> cainome::cairo_serde::call::FCall<A::Provider, bool> {
         use cainome::cairo_serde::CairoSerde;
         let mut __calldata = vec![];
         __calldata
@@ -790,32 +746,34 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> mock_oracle_ancillary<A> {
         __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
         __calldata
             .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
-        starknet::accounts::Call {
-            to: self.address,
-            selector: starknet::macros::selector!("request_price"),
-            calldata: __calldata,
-        }
-    }
-    #[allow(clippy::ptr_arg)]
-    pub fn request_price(
-        &self,
-        identifier: &starknet::core::types::FieldElement,
-        time: &cainome::cairo_serde::U256,
-        ancillary_data: &cainome::cairo_serde::ByteArray,
-    ) -> starknet::accounts::Execution<A> {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        __calldata
-            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
-        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
-        __calldata
-            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
-        let __call = starknet::accounts::Call {
-            to: self.address,
-            selector: starknet::macros::selector!("request_price"),
+        let __call = starknet::core::types::FunctionCall {
+            contract_address: self.address,
+            entry_point_selector: starknet::macros::selector!("has_price"),
             calldata: __calldata,
         };
-        self.account.execute(vec![__call])
+        cainome::cairo_serde::call::FCall::new(__call, self.provider())
+    }
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn get_price(
+        &self,
+        identifier: &starknet::core::types::FieldElement,
+        time: &cainome::cairo_serde::U256,
+        ancillary_data: &cainome::cairo_serde::ByteArray,
+    ) -> cainome::cairo_serde::call::FCall<A::Provider, cainome::cairo_serde::U256> {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        __calldata
+            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
+        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
+        __calldata
+            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
+        let __call = starknet::core::types::FunctionCall {
+            contract_address: self.address,
+            entry_point_selector: starknet::macros::selector!("get_price"),
+            calldata: __calldata,
+        };
+        cainome::cairo_serde::call::FCall::new(__call, self.provider())
     }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
@@ -899,52 +857,50 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> mock_oracle_ancillary<A> {
         };
         self.account.execute(vec![__call])
     }
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn request_price_getcall(
+        &self,
+        identifier: &starknet::core::types::FieldElement,
+        time: &cainome::cairo_serde::U256,
+        ancillary_data: &cainome::cairo_serde::ByteArray,
+    ) -> starknet::accounts::Call {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        __calldata
+            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
+        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
+        __calldata
+            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
+        starknet::accounts::Call {
+            to: self.address,
+            selector: starknet::macros::selector!("request_price"),
+            calldata: __calldata,
+        }
+    }
+    #[allow(clippy::ptr_arg)]
+    pub fn request_price(
+        &self,
+        identifier: &starknet::core::types::FieldElement,
+        time: &cainome::cairo_serde::U256,
+        ancillary_data: &cainome::cairo_serde::ByteArray,
+    ) -> starknet::accounts::Execution<A> {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        __calldata
+            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
+        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
+        __calldata
+            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
+        let __call = starknet::accounts::Call {
+            to: self.address,
+            selector: starknet::macros::selector!("request_price"),
+            calldata: __calldata,
+        };
+        self.account.execute(vec![__call])
+    }
 }
 impl<P: starknet::providers::Provider + Sync> mock_oracle_ancillaryReader<P> {
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::too_many_arguments)]
-    pub fn has_price(
-        &self,
-        identifier: &starknet::core::types::FieldElement,
-        time: &cainome::cairo_serde::U256,
-        ancillary_data: &cainome::cairo_serde::ByteArray,
-    ) -> cainome::cairo_serde::call::FCall<P, bool> {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        __calldata
-            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
-        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
-        __calldata
-            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
-        let __call = starknet::core::types::FunctionCall {
-            contract_address: self.address,
-            entry_point_selector: starknet::macros::selector!("has_price"),
-            calldata: __calldata,
-        };
-        cainome::cairo_serde::call::FCall::new(__call, self.provider())
-    }
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::too_many_arguments)]
-    pub fn get_price(
-        &self,
-        identifier: &starknet::core::types::FieldElement,
-        time: &cainome::cairo_serde::U256,
-        ancillary_data: &cainome::cairo_serde::ByteArray,
-    ) -> cainome::cairo_serde::call::FCall<P, cainome::cairo_serde::U256> {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        __calldata
-            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
-        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
-        __calldata
-            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
-        let __call = starknet::core::types::FunctionCall {
-            contract_address: self.address,
-            entry_point_selector: starknet::macros::selector!("get_price"),
-            calldata: __calldata,
-        };
-        cainome::cairo_serde::call::FCall::new(__call, self.provider())
-    }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
     pub fn get_identifier_whitelist(
@@ -988,6 +944,50 @@ impl<P: starknet::providers::Provider + Sync> mock_oracle_ancillaryReader<P> {
         let __call = starknet::core::types::FunctionCall {
             contract_address: self.address,
             entry_point_selector: starknet::macros::selector!("get_request_parameters"),
+            calldata: __calldata,
+        };
+        cainome::cairo_serde::call::FCall::new(__call, self.provider())
+    }
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn has_price(
+        &self,
+        identifier: &starknet::core::types::FieldElement,
+        time: &cainome::cairo_serde::U256,
+        ancillary_data: &cainome::cairo_serde::ByteArray,
+    ) -> cainome::cairo_serde::call::FCall<P, bool> {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        __calldata
+            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
+        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
+        __calldata
+            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
+        let __call = starknet::core::types::FunctionCall {
+            contract_address: self.address,
+            entry_point_selector: starknet::macros::selector!("has_price"),
+            calldata: __calldata,
+        };
+        cainome::cairo_serde::call::FCall::new(__call, self.provider())
+    }
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn get_price(
+        &self,
+        identifier: &starknet::core::types::FieldElement,
+        time: &cainome::cairo_serde::U256,
+        ancillary_data: &cainome::cairo_serde::ByteArray,
+    ) -> cainome::cairo_serde::call::FCall<P, cainome::cairo_serde::U256> {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        __calldata
+            .extend(starknet::core::types::FieldElement::cairo_serialize(identifier));
+        __calldata.extend(cainome::cairo_serde::U256::cairo_serialize(time));
+        __calldata
+            .extend(cainome::cairo_serde::ByteArray::cairo_serialize(ancillary_data));
+        let __call = starknet::core::types::FunctionCall {
+            contract_address: self.address,
+            entry_point_selector: starknet::macros::selector!("get_price"),
             calldata: __calldata,
         };
         cainome::cairo_serde::call::FCall::new(__call, self.provider())

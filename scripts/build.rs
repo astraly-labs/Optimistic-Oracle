@@ -7,7 +7,20 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
         std::fs::remove_file(&bind_out).unwrap();
     }
 
-    let abigen = cainome::rs::Abigen::new(name, abi_file);
+    let mut aliases = HashMap::new();
+    aliases.insert(
+        String::from("openzeppelin::access::ownable::ownable::OwnableComponent::Event"),
+        String::from("OwnableCptEvent"),
+    );
+    aliases.insert(
+        String::from("openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event"),
+        String::from("UpgradeableCptEvent"),
+    );
+    aliases.insert(
+        String::from("openzeppelin::security::reentrancyguard::::ReentrancyGuardComponent::Event"),
+        String::from("ReentrancyGuardCptEvent"),
+    );
+    let abigen = cainome::rs::Abigen::new(name, abi_file).with_types_aliases(aliases);
 
     abigen
         .generate()
@@ -22,7 +35,7 @@ fn main() {
         .parent()
         .unwrap()
         .join("optimistic_oracle/target/dev");
-    let bind_base = current_dir().unwrap().join("bind");
+    let bind_base = current_dir().unwrap().join("src/bind");
     let deployments = [
         ("finder", "finder"),
         ("address_whitelist", "address_whitelist"),

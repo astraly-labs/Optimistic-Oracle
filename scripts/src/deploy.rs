@@ -6,6 +6,7 @@ use super::{
 };
 use log::info;
 use starknet::{accounts::Account, core::types::FieldElement};
+use crate::bind::{finder::finder};
 
 pub async fn deploy_core(
     owner: &StarknetAccount,

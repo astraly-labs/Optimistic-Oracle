@@ -9,12 +9,6 @@ use starknet::{
 };
 use std::{env, fs::File, io::Write};
 use types::FormattedCodes;
-
-mod build;
-mod deploy;
-mod types;
-mod utils;
-
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     env_logger::init();
