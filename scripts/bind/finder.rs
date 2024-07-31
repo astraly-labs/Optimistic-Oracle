@@ -51,6 +51,72 @@ impl<P: starknet::providers::Provider + Sync> finderReader<P> {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub struct InterfaceImplementationChanged {
+    pub interface_name: starknet::core::types::FieldElement,
+    pub new_implementation_address: cainome::cairo_serde::ContractAddress,
+}
+impl cainome::cairo_serde::CairoSerde for InterfaceImplementationChanged {
+    type RustType = Self;
+    const SERIALIZED_SIZE: std::option::Option<usize> = None;
+    #[inline]
+    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
+        let mut __size = 0;
+        __size
+            += starknet::core::types::FieldElement::cairo_serialized_size(
+                &__rust.interface_name,
+            );
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.new_implementation_address,
+            );
+        __size
+    }
+    fn cairo_serialize(
+        __rust: &Self::RustType,
+    ) -> Vec<starknet::core::types::FieldElement> {
+        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+        __out
+            .extend(
+                starknet::core::types::FieldElement::cairo_serialize(
+                    &__rust.interface_name,
+                ),
+            );
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(
+                    &__rust.new_implementation_address,
+                ),
+            );
+        __out
+    }
+    fn cairo_deserialize(
+        __felts: &[starknet::core::types::FieldElement],
+        __offset: usize,
+    ) -> cainome::cairo_serde::Result<Self::RustType> {
+        let mut __offset = __offset;
+        let interface_name = starknet::core::types::FieldElement::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += starknet::core::types::FieldElement::cairo_serialized_size(
+                &interface_name,
+            );
+        let new_implementation_address = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &new_implementation_address,
+            );
+        Ok(InterfaceImplementationChanged {
+            interface_name,
+            new_implementation_address,
+        })
+    }
+}
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct OwnershipTransferred {
     pub previous_owner: cainome::cairo_serde::ContractAddress,
     pub new_owner: cainome::cairo_serde::ContractAddress,
@@ -171,72 +237,6 @@ impl cainome::cairo_serde::CairoSerde for OwnershipTransferStarted {
         Ok(OwnershipTransferStarted {
             previous_owner,
             new_owner,
-        })
-    }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct InterfaceImplementationChanged {
-    pub interface_name: starknet::core::types::FieldElement,
-    pub new_implementation_address: cainome::cairo_serde::ContractAddress,
-}
-impl cainome::cairo_serde::CairoSerde for InterfaceImplementationChanged {
-    type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = None;
-    #[inline]
-    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        let mut __size = 0;
-        __size
-            += starknet::core::types::FieldElement::cairo_serialized_size(
-                &__rust.interface_name,
-            );
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.new_implementation_address,
-            );
-        __size
-    }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out
-            .extend(
-                starknet::core::types::FieldElement::cairo_serialize(
-                    &__rust.interface_name,
-                ),
-            );
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(
-                    &__rust.new_implementation_address,
-                ),
-            );
-        __out
-    }
-    fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
-        __offset: usize,
-    ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let mut __offset = __offset;
-        let interface_name = starknet::core::types::FieldElement::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += starknet::core::types::FieldElement::cairo_serialized_size(
-                &interface_name,
-            );
-        let new_implementation_address = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &new_implementation_address,
-            );
-        Ok(InterfaceImplementationChanged {
-            interface_name,
-            new_implementation_address,
         })
     }
 }
@@ -691,6 +691,23 @@ impl TryFrom<starknet::core::types::EmittedEvent> for Event {
 impl<A: starknet::accounts::ConnectedAccount + Sync> finder<A> {
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
+    pub fn owner(
+        &self,
+    ) -> cainome::cairo_serde::call::FCall<
+        A::Provider,
+        cainome::cairo_serde::ContractAddress,
+    > {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        let __call = starknet::core::types::FunctionCall {
+            contract_address: self.address,
+            entry_point_selector: starknet::macros::selector!("owner"),
+            calldata: __calldata,
+        };
+        cainome::cairo_serde::call::FCall::new(__call, self.provider())
+    }
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
     pub fn get_implementation_address(
         &self,
         interface_name: &starknet::core::types::FieldElement,
@@ -712,73 +729,6 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> finder<A> {
             calldata: __calldata,
         };
         cainome::cairo_serde::call::FCall::new(__call, self.provider())
-    }
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::too_many_arguments)]
-    pub fn owner(
-        &self,
-    ) -> cainome::cairo_serde::call::FCall<
-        A::Provider,
-        cainome::cairo_serde::ContractAddress,
-    > {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        let __call = starknet::core::types::FunctionCall {
-            contract_address: self.address,
-            entry_point_selector: starknet::macros::selector!("owner"),
-            calldata: __calldata,
-        };
-        cainome::cairo_serde::call::FCall::new(__call, self.provider())
-    }
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::too_many_arguments)]
-    pub fn change_implementation_address_getcall(
-        &self,
-        interface_name: &starknet::core::types::FieldElement,
-        implementation_address: &cainome::cairo_serde::ContractAddress,
-    ) -> starknet::accounts::Call {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        __calldata
-            .extend(
-                starknet::core::types::FieldElement::cairo_serialize(interface_name),
-            );
-        __calldata
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(
-                    implementation_address,
-                ),
-            );
-        starknet::accounts::Call {
-            to: self.address,
-            selector: starknet::macros::selector!("change_implementation_address"),
-            calldata: __calldata,
-        }
-    }
-    #[allow(clippy::ptr_arg)]
-    pub fn change_implementation_address(
-        &self,
-        interface_name: &starknet::core::types::FieldElement,
-        implementation_address: &cainome::cairo_serde::ContractAddress,
-    ) -> starknet::accounts::Execution<A> {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        __calldata
-            .extend(
-                starknet::core::types::FieldElement::cairo_serialize(interface_name),
-            );
-        __calldata
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(
-                    implementation_address,
-                ),
-            );
-        let __call = starknet::accounts::Call {
-            to: self.address,
-            selector: starknet::macros::selector!("change_implementation_address"),
-            calldata: __calldata,
-        };
-        self.account.execute(vec![__call])
     }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
@@ -834,8 +784,72 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> finder<A> {
         };
         self.account.execute(vec![__call])
     }
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn change_implementation_address_getcall(
+        &self,
+        interface_name: &starknet::core::types::FieldElement,
+        implementation_address: &cainome::cairo_serde::ContractAddress,
+    ) -> starknet::accounts::Call {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        __calldata
+            .extend(
+                starknet::core::types::FieldElement::cairo_serialize(interface_name),
+            );
+        __calldata
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(
+                    implementation_address,
+                ),
+            );
+        starknet::accounts::Call {
+            to: self.address,
+            selector: starknet::macros::selector!("change_implementation_address"),
+            calldata: __calldata,
+        }
+    }
+    #[allow(clippy::ptr_arg)]
+    pub fn change_implementation_address(
+        &self,
+        interface_name: &starknet::core::types::FieldElement,
+        implementation_address: &cainome::cairo_serde::ContractAddress,
+    ) -> starknet::accounts::Execution<A> {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        __calldata
+            .extend(
+                starknet::core::types::FieldElement::cairo_serialize(interface_name),
+            );
+        __calldata
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(
+                    implementation_address,
+                ),
+            );
+        let __call = starknet::accounts::Call {
+            to: self.address,
+            selector: starknet::macros::selector!("change_implementation_address"),
+            calldata: __calldata,
+        };
+        self.account.execute(vec![__call])
+    }
 }
 impl<P: starknet::providers::Provider + Sync> finderReader<P> {
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn owner(
+        &self,
+    ) -> cainome::cairo_serde::call::FCall<P, cainome::cairo_serde::ContractAddress> {
+        use cainome::cairo_serde::CairoSerde;
+        let mut __calldata = vec![];
+        let __call = starknet::core::types::FunctionCall {
+            contract_address: self.address,
+            entry_point_selector: starknet::macros::selector!("owner"),
+            calldata: __calldata,
+        };
+        cainome::cairo_serde::call::FCall::new(__call, self.provider())
+    }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
     pub fn get_implementation_address(
@@ -853,20 +867,6 @@ impl<P: starknet::providers::Provider + Sync> finderReader<P> {
             entry_point_selector: starknet::macros::selector!(
                 "get_implementation_address"
             ),
-            calldata: __calldata,
-        };
-        cainome::cairo_serde::call::FCall::new(__call, self.provider())
-    }
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::too_many_arguments)]
-    pub fn owner(
-        &self,
-    ) -> cainome::cairo_serde::call::FCall<P, cainome::cairo_serde::ContractAddress> {
-        use cainome::cairo_serde::CairoSerde;
-        let mut __calldata = vec![];
-        let __call = starknet::core::types::FunctionCall {
-            contract_address: self.address,
-            entry_point_selector: starknet::macros::selector!("owner"),
             calldata: __calldata,
         };
         cainome::cairo_serde::call::FCall::new(__call, self.provider())

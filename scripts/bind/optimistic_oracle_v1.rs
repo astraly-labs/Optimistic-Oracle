@@ -51,6 +51,114 @@ impl<P: starknet::providers::Provider + Sync> optimistic_oracle_v1Reader<P> {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub struct OwnershipTransferred {
+    pub previous_owner: cainome::cairo_serde::ContractAddress,
+    pub new_owner: cainome::cairo_serde::ContractAddress,
+}
+impl cainome::cairo_serde::CairoSerde for OwnershipTransferred {
+    type RustType = Self;
+    const SERIALIZED_SIZE: std::option::Option<usize> = None;
+    #[inline]
+    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
+        let mut __size = 0;
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.previous_owner,
+            );
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.new_owner,
+            );
+        __size
+    }
+    fn cairo_serialize(
+        __rust: &Self::RustType,
+    ) -> Vec<starknet::core::types::FieldElement> {
+        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(
+                    &__rust.previous_owner,
+                ),
+            );
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(&__rust.new_owner),
+            );
+        __out
+    }
+    fn cairo_deserialize(
+        __felts: &[starknet::core::types::FieldElement],
+        __offset: usize,
+    ) -> cainome::cairo_serde::Result<Self::RustType> {
+        let mut __offset = __offset;
+        let previous_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &previous_owner,
+            );
+        let new_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(&new_owner);
+        Ok(OwnershipTransferred {
+            previous_owner,
+            new_owner,
+        })
+    }
+}
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub struct ERC20ABIDispatcher {
+    pub contract_address: cainome::cairo_serde::ContractAddress,
+}
+impl cainome::cairo_serde::CairoSerde for ERC20ABIDispatcher {
+    type RustType = Self;
+    const SERIALIZED_SIZE: std::option::Option<usize> = None;
+    #[inline]
+    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
+        let mut __size = 0;
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.contract_address,
+            );
+        __size
+    }
+    fn cairo_serialize(
+        __rust: &Self::RustType,
+    ) -> Vec<starknet::core::types::FieldElement> {
+        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(
+                    &__rust.contract_address,
+                ),
+            );
+        __out
+    }
+    fn cairo_deserialize(
+        __felts: &[starknet::core::types::FieldElement],
+        __offset: usize,
+    ) -> cainome::cairo_serde::Result<Self::RustType> {
+        let mut __offset = __offset;
+        let contract_address = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &contract_address,
+            );
+        Ok(ERC20ABIDispatcher {
+            contract_address,
+        })
+    }
+}
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct AssertionSettled {
     pub assertion_id: starknet::core::types::FieldElement,
     pub bond_recipient: cainome::cairo_serde::ContractAddress,
@@ -234,52 +342,6 @@ impl cainome::cairo_serde::CairoSerde for EscalationManagerSettings {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct ERC20ABIDispatcher {
-    pub contract_address: cainome::cairo_serde::ContractAddress,
-}
-impl cainome::cairo_serde::CairoSerde for ERC20ABIDispatcher {
-    type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = None;
-    #[inline]
-    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        let mut __size = 0;
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.contract_address,
-            );
-        __size
-    }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(
-                    &__rust.contract_address,
-                ),
-            );
-        __out
-    }
-    fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
-        __offset: usize,
-    ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let mut __offset = __offset;
-        let contract_address = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &contract_address,
-            );
-        Ok(ERC20ABIDispatcher {
-            contract_address,
-        })
-    }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct AssertionDisputed {
     pub assertion_id: starknet::core::types::FieldElement,
     pub caller: cainome::cairo_serde::ContractAddress,
@@ -352,68 +414,6 @@ impl cainome::cairo_serde::CairoSerde for AssertionDisputed {
             assertion_id,
             caller,
             disputer,
-        })
-    }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct OwnershipTransferStarted {
-    pub previous_owner: cainome::cairo_serde::ContractAddress,
-    pub new_owner: cainome::cairo_serde::ContractAddress,
-}
-impl cainome::cairo_serde::CairoSerde for OwnershipTransferStarted {
-    type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = None;
-    #[inline]
-    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        let mut __size = 0;
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.previous_owner,
-            );
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.new_owner,
-            );
-        __size
-    }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(
-                    &__rust.previous_owner,
-                ),
-            );
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(&__rust.new_owner),
-            );
-        __out
-    }
-    fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
-        __offset: usize,
-    ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let mut __offset = __offset;
-        let previous_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &previous_owner,
-            );
-        let new_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(&new_owner);
-        Ok(OwnershipTransferStarted {
-            previous_owner,
-            new_owner,
         })
     }
 }
@@ -817,11 +817,11 @@ impl cainome::cairo_serde::CairoSerde for AdminPropertiesSet {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct OwnershipTransferred {
+pub struct OwnershipTransferStarted {
     pub previous_owner: cainome::cairo_serde::ContractAddress,
     pub new_owner: cainome::cairo_serde::ContractAddress,
 }
-impl cainome::cairo_serde::CairoSerde for OwnershipTransferred {
+impl cainome::cairo_serde::CairoSerde for OwnershipTransferStarted {
     type RustType = Self;
     const SERIALIZED_SIZE: std::option::Option<usize> = None;
     #[inline]
@@ -872,7 +872,7 @@ impl cainome::cairo_serde::CairoSerde for OwnershipTransferred {
         )?;
         __offset
             += cainome::cairo_serde::ContractAddress::cairo_serialized_size(&new_owner);
-        Ok(OwnershipTransferred {
+        Ok(OwnershipTransferStarted {
             previous_owner,
             new_owner,
         })

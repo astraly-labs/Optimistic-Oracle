@@ -113,40 +113,6 @@ impl cainome::cairo_serde::CairoSerde for OwnershipTransferred {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct NewFinalFee {
-    pub new_final_fee: cainome::cairo_serde::U256,
-}
-impl cainome::cairo_serde::CairoSerde for NewFinalFee {
-    type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = None;
-    #[inline]
-    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        let mut __size = 0;
-        __size
-            += cainome::cairo_serde::U256::cairo_serialized_size(&__rust.new_final_fee);
-        __size
-    }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out.extend(cainome::cairo_serde::U256::cairo_serialize(&__rust.new_final_fee));
-        __out
-    }
-    fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
-        __offset: usize,
-    ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let mut __offset = __offset;
-        let new_final_fee = cainome::cairo_serde::U256::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset += cainome::cairo_serde::U256::cairo_serialized_size(&new_final_fee);
-        Ok(NewFinalFee { new_final_fee })
-    }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct OwnershipTransferStarted {
     pub previous_owner: cainome::cairo_serde::ContractAddress,
     pub new_owner: cainome::cairo_serde::ContractAddress,
@@ -206,6 +172,40 @@ impl cainome::cairo_serde::CairoSerde for OwnershipTransferStarted {
             previous_owner,
             new_owner,
         })
+    }
+}
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub struct NewFinalFee {
+    pub new_final_fee: cainome::cairo_serde::U256,
+}
+impl cainome::cairo_serde::CairoSerde for NewFinalFee {
+    type RustType = Self;
+    const SERIALIZED_SIZE: std::option::Option<usize> = None;
+    #[inline]
+    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
+        let mut __size = 0;
+        __size
+            += cainome::cairo_serde::U256::cairo_serialized_size(&__rust.new_final_fee);
+        __size
+    }
+    fn cairo_serialize(
+        __rust: &Self::RustType,
+    ) -> Vec<starknet::core::types::FieldElement> {
+        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+        __out.extend(cainome::cairo_serde::U256::cairo_serialize(&__rust.new_final_fee));
+        __out
+    }
+    fn cairo_deserialize(
+        __felts: &[starknet::core::types::FieldElement],
+        __offset: usize,
+    ) -> cainome::cairo_serde::Result<Self::RustType> {
+        let mut __offset = __offset;
+        let new_final_fee = cainome::cairo_serde::U256::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset += cainome::cairo_serde::U256::cairo_serialized_size(&new_final_fee);
+        Ok(NewFinalFee { new_final_fee })
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]

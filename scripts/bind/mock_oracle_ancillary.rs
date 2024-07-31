@@ -51,24 +51,17 @@ impl<P: starknet::providers::Provider + Sync> mock_oracle_ancillaryReader<P> {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct PushedPrice {
-    pub pusher: cainome::cairo_serde::ContractAddress,
+pub struct QueryPoint {
     pub identifier: starknet::core::types::FieldElement,
     pub time: cainome::cairo_serde::U256,
     pub ancillary_data: cainome::cairo_serde::ByteArray,
-    pub price: cainome::cairo_serde::U256,
-    pub request_id: starknet::core::types::FieldElement,
 }
-impl cainome::cairo_serde::CairoSerde for PushedPrice {
+impl cainome::cairo_serde::CairoSerde for QueryPoint {
     type RustType = Self;
     const SERIALIZED_SIZE: std::option::Option<usize> = None;
     #[inline]
     fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
         let mut __size = 0;
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.pusher,
-            );
         __size
             += starknet::core::types::FieldElement::cairo_serialized_size(
                 &__rust.identifier,
@@ -78,21 +71,12 @@ impl cainome::cairo_serde::CairoSerde for PushedPrice {
             += cainome::cairo_serde::ByteArray::cairo_serialized_size(
                 &__rust.ancillary_data,
             );
-        __size += cainome::cairo_serde::U256::cairo_serialized_size(&__rust.price);
-        __size
-            += starknet::core::types::FieldElement::cairo_serialized_size(
-                &__rust.request_id,
-            );
         __size
     }
     fn cairo_serialize(
         __rust: &Self::RustType,
     ) -> Vec<starknet::core::types::FieldElement> {
         let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(&__rust.pusher),
-            );
         __out
             .extend(
                 starknet::core::types::FieldElement::cairo_serialize(&__rust.identifier),
@@ -102,11 +86,6 @@ impl cainome::cairo_serde::CairoSerde for PushedPrice {
             .extend(
                 cainome::cairo_serde::ByteArray::cairo_serialize(&__rust.ancillary_data),
             );
-        __out.extend(cainome::cairo_serde::U256::cairo_serialize(&__rust.price));
-        __out
-            .extend(
-                starknet::core::types::FieldElement::cairo_serialize(&__rust.request_id),
-            );
         __out
     }
     fn cairo_deserialize(
@@ -114,12 +93,6 @@ impl cainome::cairo_serde::CairoSerde for PushedPrice {
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
         let mut __offset = __offset;
-        let pusher = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(&pusher);
         let identifier = starknet::core::types::FieldElement::cairo_deserialize(
             __felts,
             __offset,
@@ -134,21 +107,10 @@ impl cainome::cairo_serde::CairoSerde for PushedPrice {
         )?;
         __offset
             += cainome::cairo_serde::ByteArray::cairo_serialized_size(&ancillary_data);
-        let price = cainome::cairo_serde::U256::cairo_deserialize(__felts, __offset)?;
-        __offset += cainome::cairo_serde::U256::cairo_serialized_size(&price);
-        let request_id = starknet::core::types::FieldElement::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += starknet::core::types::FieldElement::cairo_serialized_size(&request_id);
-        Ok(PushedPrice {
-            pusher,
+        Ok(QueryPoint {
             identifier,
             time,
             ancillary_data,
-            price,
-            request_id,
         })
     }
 }
@@ -249,17 +211,24 @@ impl cainome::cairo_serde::CairoSerde for PriceRequestAdded {
     }
 }
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct QueryPoint {
+pub struct PushedPrice {
+    pub pusher: cainome::cairo_serde::ContractAddress,
     pub identifier: starknet::core::types::FieldElement,
     pub time: cainome::cairo_serde::U256,
     pub ancillary_data: cainome::cairo_serde::ByteArray,
+    pub price: cainome::cairo_serde::U256,
+    pub request_id: starknet::core::types::FieldElement,
 }
-impl cainome::cairo_serde::CairoSerde for QueryPoint {
+impl cainome::cairo_serde::CairoSerde for PushedPrice {
     type RustType = Self;
     const SERIALIZED_SIZE: std::option::Option<usize> = None;
     #[inline]
     fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
         let mut __size = 0;
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.pusher,
+            );
         __size
             += starknet::core::types::FieldElement::cairo_serialized_size(
                 &__rust.identifier,
@@ -269,12 +238,21 @@ impl cainome::cairo_serde::CairoSerde for QueryPoint {
             += cainome::cairo_serde::ByteArray::cairo_serialized_size(
                 &__rust.ancillary_data,
             );
+        __size += cainome::cairo_serde::U256::cairo_serialized_size(&__rust.price);
+        __size
+            += starknet::core::types::FieldElement::cairo_serialized_size(
+                &__rust.request_id,
+            );
         __size
     }
     fn cairo_serialize(
         __rust: &Self::RustType,
     ) -> Vec<starknet::core::types::FieldElement> {
         let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(&__rust.pusher),
+            );
         __out
             .extend(
                 starknet::core::types::FieldElement::cairo_serialize(&__rust.identifier),
@@ -284,6 +262,11 @@ impl cainome::cairo_serde::CairoSerde for QueryPoint {
             .extend(
                 cainome::cairo_serde::ByteArray::cairo_serialize(&__rust.ancillary_data),
             );
+        __out.extend(cainome::cairo_serde::U256::cairo_serialize(&__rust.price));
+        __out
+            .extend(
+                starknet::core::types::FieldElement::cairo_serialize(&__rust.request_id),
+            );
         __out
     }
     fn cairo_deserialize(
@@ -291,6 +274,12 @@ impl cainome::cairo_serde::CairoSerde for QueryPoint {
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
         let mut __offset = __offset;
+        let pusher = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(&pusher);
         let identifier = starknet::core::types::FieldElement::cairo_deserialize(
             __felts,
             __offset,
@@ -305,10 +294,21 @@ impl cainome::cairo_serde::CairoSerde for QueryPoint {
         )?;
         __offset
             += cainome::cairo_serde::ByteArray::cairo_serialized_size(&ancillary_data);
-        Ok(QueryPoint {
+        let price = cainome::cairo_serde::U256::cairo_deserialize(__felts, __offset)?;
+        __offset += cainome::cairo_serde::U256::cairo_serialized_size(&price);
+        let request_id = starknet::core::types::FieldElement::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += starknet::core::types::FieldElement::cairo_serialized_size(&request_id);
+        Ok(PushedPrice {
+            pusher,
             identifier,
             time,
             ancillary_data,
+            price,
+            request_id,
         })
     }
 }
