@@ -1,3 +1,4 @@
 optimistic_oracle/.snfoundry_cache/.prev_tests_failed
 .env
 scripts/target
+scripts/bind/*.rs
