@@ -1,7 +1,5 @@
 use std::{collections::HashMap, env::current_dir, path::PathBuf};
 
-use ethers::prelude::Abigen;
-
 fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
     if bind_out.exists() {
         std::fs::remove_file(&bind_out).unwrap();
@@ -17,7 +15,7 @@ fn generate_strk_bind(name: &str, abi_file: &str, bind_out: PathBuf) {
         String::from("UpgradeableCptEvent"),
     );
     aliases.insert(
-        String::from("openzeppelin::security::reentrancyguard::::ReentrancyGuardComponent::Event"),
+        String::from("openzeppelin::security::reentrancyguard::ReentrancyGuardComponent::Event"),
         String::from("ReentrancyGuardCptEvent"),
     );
     let abigen = cainome::rs::Abigen::new(name, abi_file).with_types_aliases(aliases);

@@ -3,14 +3,14 @@ use log::info;
 use serde_json;
 use starknet::{
     accounts::{ExecutionEncoding, SingleOwnerAccount},
-    core::{chain_id, types::FieldElement},
+    core::{chain_id, types::Felt},
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, Url},
     signers::{LocalWallet, SigningKey},
 };
-use std::{env, fs::File, io::Write};
-pub use bind::*;
 
-use types::FormattedCodes;
+use std::{env, fs::File, io::Write};
+
+use scripts::types::FormattedCodes;
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     env_logger::init();
@@ -33,12 +33,12 @@ async fn main() -> eyre::Result<()> {
     let account_address = env::var("STARKNET_ACCOUNT_ADDRESS")
         .expect("STARKNET_ACCOUNT_ADDRESS not set in environment");
 
-    let secret_scalar = FieldElement::from_hex_be(&private_key).unwrap();
+    let secret_scalar = Felt::from_hex(&private_key).unwrap();
     let signing_key = SigningKey::from_secret_scalar(secret_scalar);
     let signer = LocalWallet::from(signing_key);
 
     // Set up the account (replace with your account address)
-    let account_address = FieldElement::from_hex_be(&account_address).unwrap();
+    let account_address = Felt::from_hex(&account_address).unwrap();
     let account = SingleOwnerAccount::new(
         provider,
         signer,
@@ -47,17 +47,17 @@ async fn main() -> eyre::Result<()> {
         ExecutionEncoding::New,
     );
 
-    let declarations = utils::declare_all(&account).await?;
+    let declarations = scripts::utils::declare_all(&account).await?;
 
-    let oo_config = types::OOConfig {
+    let oo_config = scripts::types::OOConfig {
         liveness: 120,
-        erc20_token: types::ETH_ADDRESS,
+        erc20_token: scripts::types::ETH_ADDRESS,
         final_fee: cainome::cairo_serde::U256 {
             low: 100000000,
             high: 0,
         },
     };
-    let deployments = deploy::deploy_core(&account, &account, oo_config, &declarations).await?;
+    let deployments = scripts::deploy::deploy_core(&account, &account, oo_config, &declarations).await?;
 
     // Create the formatted structure
     let formatted_codes = FormattedCodes {

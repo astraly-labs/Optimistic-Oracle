@@ -2,11 +2,14 @@ use crate::types::{LibraryContracts, OODeploymentArguments, ASSERT_TRUTH};
 
 use super::{
     types::{oracle_interfaces, Codes, OOConfig, StarknetAccount},
-    utils::{deploy_contract, execute_call},
+    utils::deploy_contract,
 };
-use log::info;
+use anyhow::Result;
+
+use log::{info, error};
 use starknet::{accounts::Account, core::types::Felt};
-use crate::bind::{finder::finder};
+use crate::bind::{finder::finder, store::store, identifier_whitelist::identifier_whitelist, address_whitelist::address_whitelist};
+use cainome::cairo_serde::ContractAddress;
 
 pub async fn deploy_core(
     owner: &StarknetAccount,
@@ -42,7 +45,7 @@ pub async fn deploy_core(
 
     info!("Oracle ancillary deployed: {:x?}", oracle_ancillary);
 
-    configure_contracts(
+    match configure_contracts(
         &default_configuration,
         LibraryContracts {
             finder,
@@ -53,7 +56,10 @@ pub async fn deploy_core(
         },
         owner,
     )
-    .await;
+    .await{
+        Ok(_) => info!("Contract configuration completed successfully"),
+        Err(e) => error!("An error occurred during contract configuration: {:?}", e),
+    }
 
     info!("Deploying Optimistic oracle... ");
     let optimistic_oracle_v1 = deploy_optimistic_oracle(
@@ -123,92 +129,65 @@ pub async fn configure_contracts(
     default_configuration: &OOConfig,
     contracts: LibraryContracts,
     owner: &StarknetAccount,
-) {
-    let store_calldata = vec![
-        default_configuration.erc20_token,
-        default_configuration.final_fee.low.into(),
-        default_configuration.final_fee.high.into(),
-    ]; // TODO : verify if there is no method more effective than this
-    let store_tx_hash = execute_call(contracts.store, "set_final_fee", store_calldata, owner).await;
+) -> Result<()>{
+    let store = store::new(contracts.store, owner);
+    let store_res = store.set_final_fee(&ContractAddress(default_configuration.erc20_token.into()), &default_configuration.final_fee).send().await?;
 
     info!(
         "Set final fee for store contract with tx hash: {:x?}",
-        store_tx_hash
+        store_res.transaction_hash
     );
 
-    let identifier_whitelist_calldata = vec![ASSERT_TRUTH];
-    let identifier_whitelist_tx_hash = execute_call(
-        contracts.identifier_whitelist,
-        "add_supported_identifier",
-        identifier_whitelist_calldata,
-        owner,
-    )
-    .await;
+    let identifier_whitelist = identifier_whitelist::new(contracts.identifier_whitelist, owner);
+    let identifier_whitelist_res = identifier_whitelist.add_supported_identifier(&ASSERT_TRUTH).send().await?; 
 
     info!(
         "Add supported identifer for identifier whitelist contract with tx hash: {:x?}",
-        identifier_whitelist_tx_hash
+        identifier_whitelist_res.transaction_hash
     );
 
-    let address_whitelist_calldata = vec![default_configuration.erc20_token]; // "ASSERT_TRUTH"
-    let address_whitelist_tx_hash = execute_call(
-        contracts.address_whitelist,
-        "add_to_whitelist",
-        address_whitelist_calldata,
-        owner,
-    )
-    .await;
+    let address_whitelist = address_whitelist::new(contracts.address_whitelist, owner); 
+    let address_whitelist_res = address_whitelist.add_to_whitelist(&ContractAddress(default_configuration.erc20_token)).send().await?;
 
     info!(
         "Add collateral address whitelist for address whitelist contract with tx hash: {:x?}",
-        identifier_whitelist_tx_hash
+        address_whitelist_res.transaction_hash
     );
 
-    let finder_iw_calldata = vec![
-        oracle_interfaces::OracleInterface::IDENTIFIER_WHITELIST.as_str(),
-        contracts.identifier_whitelist,
-    ];
-    let finder_iw_tx_hash = execute_call(
-        contracts.finder,
-        "change_implementation_address",
-        finder_iw_calldata,
-        owner,
-    )
-    .await;
+    let finder = finder::new(contracts.finder, owner);
+    let finder_res = finder.change_implementation_address( &oracle_interfaces::OracleInterface::IDENTIFIER_WHITELIST.as_str(),
+    &ContractAddress(contracts.identifier_whitelist)).send().await?;
 
-    let finder_cw_calldata = vec![
-        oracle_interfaces::OracleInterface::COLLATERAL_WHITELIST.as_str(),
-        contracts.address_whitelist,
-    ];
-    let finder_cw_tx_hash = execute_call(
-        contracts.finder,
-        "change_implementation_address",
-        finder_cw_calldata,
-        owner,
-    )
-    .await;
+    info!(
+        "Set implementation address for IDENTIFIER_WHITELIST: {:x?}",
+        finder_res.transaction_hash
+    );
 
-    let finder_o_calldata = vec![
-        oracle_interfaces::OracleInterface::ORACLE.as_str(),
-        contracts.oracle,
-    ];
-    let finder_o_tx_hash = execute_call(
-        contracts.finder,
-        "change_implementation_address",
-        finder_o_calldata,
-        owner,
-    )
-    .await;
+    let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::COLLATERAL_WHITELIST.as_str(),
+    &ContractAddress(contracts.address_whitelist)).send().await?; 
 
-    let finder_s_calldata = vec![
-        oracle_interfaces::OracleInterface::STORE.as_str(),
-        contracts.store,
-    ];
-    let finder_s_tx_hash = execute_call(
-        contracts.finder,
-        "change_implementation_address",
-        finder_s_calldata,
-        owner,
-    )
-    .await;
+    info!(
+        "Set implementation address for COLLATERAL_WHITELIST: {:x?}",
+        finder_res.transaction_hash
+    );
+
+    let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::ORACLE.as_str(),
+    &ContractAddress(contracts.oracle)).send().await?; 
+
+    info!(
+        "Set implementation address for ORACLE: {:x?}",
+        finder_res.transaction_hash
+    );
+
+
+    let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::STORE.as_str(),
+    &ContractAddress(contracts.store)).send().await?; 
+
+    info!(
+        "Set implementation address for STORE: {:x?}",
+        finder_res.transaction_hash
+    );
+
+    Ok(())
+
 }

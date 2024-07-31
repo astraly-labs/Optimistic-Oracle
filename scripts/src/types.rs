@@ -1,14 +1,10 @@
-use cainome::cairo_serde::CairoSerde;
 use starknet::{
-    accounts::{Account, ConnectedAccount, SingleOwnerAccount},
-    contract::ContractFactory,
+    accounts::SingleOwnerAccount,
     core::types::Felt,
     macros::felt,
-    providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
-    signers::{LocalWallet, SigningKey},
+    providers::AnyProvider,
+    signers::LocalWallet,
 };
-use std::future::Future;
-use std::sync::Arc;
 
 pub type StarknetAccount = SingleOwnerAccount<AnyProvider, LocalWallet>;
 pub const ETH_ADDRESS: Felt =
