@@ -17,7 +17,7 @@ async fn main() -> eyre::Result<()> {
 
     dotenv().ok();
     let provider = AnyProvider::JsonRpcHttp(JsonRpcClient::new(HttpTransport::new(
-        Url::parse("https://free-rpc.nethermind.io/sepolia-juno").unwrap(),
+        Url::parse("https://starknet-sepolia.public.blastapi.io/rpc/v0_7").unwrap(),
     )));
 
     // Test out the provider

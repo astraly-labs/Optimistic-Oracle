@@ -26,7 +26,7 @@ pub async fn deploy_contract(
     deployer: &StarknetAccount,
 ) -> (Felt, InvokeTransactionResult) {
     let contract_factory = ContractFactory::new(class_hash, deployer);
-    let salt = felt!("0");
+    let salt = felt!("1122");
 
     let deployment = contract_factory.deploy(constructor_calldata, salt, false);
 
