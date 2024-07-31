@@ -16,4 +16,7 @@ url = "2.5.2"
 eyre = { version = "0.6.8" }
 serde_json = "1.0"
 serde = { version = "1.0.162", default-features = false, features = ["derive"] }
+log = "0.4"
+env_logger = "0.11.5"
+
 

@@ -1,5 +1,6 @@
+use log::info;
 use starknet::{
-    accounts::{Account, Call, ConnectedAccount, SingleOwnerAccount},
+    accounts::{Account, Call, ConnectedAccount},
     contract::ContractFactory,
     core::types::{
         contract::{CompiledClass, SierraClass},
@@ -8,8 +9,7 @@ use starknet::{
     },
     core::utils::get_selector_from_name,
     macros::felt,
-    providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, ProviderError, Url},
-    signers::{LocalWallet, SigningKey},
+    providers::{AnyProvider, Provider, ProviderError},
 };
 use std::future::Future;
 use std::sync::Arc;
@@ -81,12 +81,12 @@ async fn declare_contract(
 
     // Declare the contract class if it is not already declared.
     if !is_already_declared(account.provider(), &class_hash).await? {
-        println!("\n==> Declaring Contract: {contract_name}");
+        info!("\n==> Declaring Contract: {contract_name}");
         account
             .declare(Arc::new(flattened_class), compiled_class_hash)
             .send()
             .await?;
-        println!("Declared Class Hash: {}", format!("{:#064x}", class_hash));
+        info!("Declared Class Hash: {}", format!("{:#064x}", class_hash));
     };
 
     Ok(class_hash)
@@ -119,7 +119,7 @@ pub async fn get_transaction_receipt(
     assert_poll(
         || async { rpc.get_transaction_receipt(transaction_hash).await.is_ok() },
         100,
-        20,
+        40,
     )
     .await;
 
@@ -141,8 +141,8 @@ where
         .await
     {
         Ok(_) => {
-            eprintln!("Not declaring class as it's already declared. Class hash:");
-            println!("{}", format!("{:#064x}", class_hash));
+            info!("Not declaring class as it's already declared. Class hash:");
+            info!("{}", format!("{:#064x}", class_hash));
 
             Ok(true)
         }
@@ -152,13 +152,13 @@ where
 }
 
 pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
-    let finder = declare_contract(deployer, "finder").await?;
-    let address_whitelist = declare_contract(deployer, "address_whitelist").await?;
-    let identifier_whitelist = declare_contract(deployer, "identifier_whitelist").await?;
-    let store = declare_contract(deployer, "store").await?;
-    let oracle_ancillary = declare_contract(deployer, "oracle_ancillary").await?;
+    let finder = declare_contract(deployer, "finder").await.map_err(|e| eyre::eyre!("Failed to declare finder contract: {}", e))?;
+    let address_whitelist = declare_contract(deployer, "address_whitelist").await.map_err(|e| eyre::eyre!("Failed to declare address whitelist contract: {}", e))?;
+    let identifier_whitelist = declare_contract(deployer, "identifier_whitelist").await.map_err(|e| eyre::eyre!("Failed to declare identifier whitelist contract: {}", e))?;
+    let store = declare_contract(deployer, "store").await.map_err(|e| eyre::eyre!("Failed to declare store contract: {}", e))?;
+    let oracle_ancillary = declare_contract(deployer, "mock_oracle_ancillary").await.map_err(|e| eyre::eyre!("Failed to declare oracle ancillary contract: {}", e))?;
     let optimistic_oracle_v1: FieldElement =
-        declare_contract(deployer, "optimistic_oracle_v1").await?;
+        declare_contract(deployer, "optimistic_oracle_v1").await.map_err(|e| eyre::eyre!("Failed to declare oo contract: {}", e))?;
     Ok(Codes {
         finder,
         address_whitelist,

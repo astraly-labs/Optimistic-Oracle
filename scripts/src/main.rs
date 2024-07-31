@@ -1,32 +1,33 @@
 use dotenv::dotenv;
+use log::info;
 use serde_json;
 use starknet::{
-    accounts::{Account, Call, ExecutionEncoding, SingleOwnerAccount},
-    contract::ContractFactory,
-    core::{
-        chain_id,
-        types::{contract::CompiledClass, FieldElement, FlattenedSierraClass},
-    },
-    macros::felt,
-    providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, Url},
+    accounts::{ExecutionEncoding, SingleOwnerAccount},
+    core::{chain_id, types::FieldElement},
+    providers::{jsonrpc::HttpTransport, AnyProvider, Provider, JsonRpcClient, Url},
     signers::{LocalWallet, SigningKey},
 };
-use std::env;
-use std::sync::Arc;
-use types::OO_Config;
-use types::{Codes, FormattedCodes};
+use std::{env, fs::File, io::Write};
+use types::FormattedCodes;
+
+mod deploy;
 mod types;
 mod utils;
-use std::fs::File;
-use std::io::Write;
-mod deploy;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    env_logger::init();
+
     dotenv().ok();
     let provider = AnyProvider::JsonRpcHttp(JsonRpcClient::new(HttpTransport::new(
-        Url::parse("https://alpha-sepolia.starknet.io/").unwrap(),
+        Url::parse("https://free-rpc.nethermind.io/sepolia-juno").unwrap(),
     )));
+
+    // Test out the provider
+    // Add this after creating the provider
+    provider.block_number()
+    .await
+    .map_err(|e| eyre::eyre!("Failed to connect to provider: {}", e))?;
 
     let private_key =
         env::var("STARKNET_PRIVATE_KEY").expect("STARKNET_PRIVATE_KEY not set in environment");
@@ -48,9 +49,9 @@ async fn main() -> eyre::Result<()> {
         ExecutionEncoding::New,
     );
 
-    let declarations = utils::declare_all(&account).await.unwrap();
+    let declarations = utils::declare_all(&account).await?;
 
-    let oo_config = types::OO_Config {
+    let oo_config = types::OOConfig {
         liveness: 120,
         erc20_token: types::ETH_ADDRESS,
         final_fee: cainome::cairo_serde::U256 {
@@ -73,7 +74,7 @@ async fn main() -> eyre::Result<()> {
     let mut file = File::create("sepolia_deployments.json")?;
     file.write_all(json.as_bytes())?;
 
-    println!("JSON file 'starknet_addresses.json' has been created successfully.");
+    info!("JSON file 'starknet_addresses.json' has been created successfully.");
 
     Ok(())
 }
