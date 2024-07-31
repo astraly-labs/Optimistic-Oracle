@@ -152,13 +152,24 @@ where
 }
 
 pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
-    let finder = declare_contract(deployer, "finder").await.map_err(|e| eyre::eyre!("Failed to declare finder contract: {}", e))?;
-    let address_whitelist = declare_contract(deployer, "address_whitelist").await.map_err(|e| eyre::eyre!("Failed to declare address whitelist contract: {}", e))?;
-    let identifier_whitelist = declare_contract(deployer, "identifier_whitelist").await.map_err(|e| eyre::eyre!("Failed to declare identifier whitelist contract: {}", e))?;
-    let store = declare_contract(deployer, "store").await.map_err(|e| eyre::eyre!("Failed to declare store contract: {}", e))?;
-    let oracle_ancillary = declare_contract(deployer, "mock_oracle_ancillary").await.map_err(|e| eyre::eyre!("Failed to declare oracle ancillary contract: {}", e))?;
-    let optimistic_oracle_v1: FieldElement =
-        declare_contract(deployer, "optimistic_oracle_v1").await.map_err(|e| eyre::eyre!("Failed to declare oo contract: {}", e))?;
+    let finder = declare_contract(deployer, "finder")
+        .await
+        .map_err(|e| eyre::eyre!("Failed to declare finder contract: {}", e))?;
+    let address_whitelist = declare_contract(deployer, "address_whitelist")
+        .await
+        .map_err(|e| eyre::eyre!("Failed to declare address whitelist contract: {}", e))?;
+    let identifier_whitelist = declare_contract(deployer, "identifier_whitelist")
+        .await
+        .map_err(|e| eyre::eyre!("Failed to declare identifier whitelist contract: {}", e))?;
+    let store = declare_contract(deployer, "store")
+        .await
+        .map_err(|e| eyre::eyre!("Failed to declare store contract: {}", e))?;
+    let oracle_ancillary = declare_contract(deployer, "mock_oracle_ancillary")
+        .await
+        .map_err(|e| eyre::eyre!("Failed to declare oracle ancillary contract: {}", e))?;
+    let optimistic_oracle_v1: FieldElement = declare_contract(deployer, "optimistic_oracle_v1")
+        .await
+        .map_err(|e| eyre::eyre!("Failed to declare oo contract: {}", e))?;
     Ok(Codes {
         finder,
         address_whitelist,

@@ -4,12 +4,13 @@ use serde_json;
 use starknet::{
     accounts::{ExecutionEncoding, SingleOwnerAccount},
     core::{chain_id, types::FieldElement},
-    providers::{jsonrpc::HttpTransport, AnyProvider, Provider, JsonRpcClient, Url},
+    providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, Url},
     signers::{LocalWallet, SigningKey},
 };
 use std::{env, fs::File, io::Write};
 use types::FormattedCodes;
 
+mod build;
 mod deploy;
 mod types;
 mod utils;
@@ -25,9 +26,10 @@ async fn main() -> eyre::Result<()> {
 
     // Test out the provider
     // Add this after creating the provider
-    provider.block_number()
-    .await
-    .map_err(|e| eyre::eyre!("Failed to connect to provider: {}", e))?;
+    provider
+        .block_number()
+        .await
+        .map_err(|e| eyre::eyre!("Failed to connect to provider: {}", e))?;
 
     let private_key =
         env::var("STARKNET_PRIVATE_KEY").expect("STARKNET_PRIVATE_KEY not set in environment");
