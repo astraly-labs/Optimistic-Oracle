@@ -8,6 +8,8 @@ use starknet::{
     signers::{LocalWallet, SigningKey},
 };
 use std::{env, fs::File, io::Write};
+pub use bind::*;
+
 use types::FormattedCodes;
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

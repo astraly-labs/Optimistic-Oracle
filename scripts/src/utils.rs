@@ -4,8 +4,8 @@ use starknet::{
     contract::ContractFactory,
     core::types::{
         contract::{CompiledClass, SierraClass},
-        BlockId, BlockTag, ExecutionResult, FieldElement, FlattenedSierraClass,
-        InvokeTransactionResult, MaybePendingTransactionReceipt, StarknetError,
+        BlockId, BlockTag, ExecutionResult, Felt, FlattenedSierraClass,
+        InvokeTransactionResult, TransactionReceiptWithBlockInfo,StarknetError,
     },
     core::utils::get_selector_from_name,
     macros::felt,
@@ -21,10 +21,10 @@ const BUILD_PATH_PREFIX: &str = "../optimistic_oracle/target/dev/optimistic_orac
 /// Deploys a contract with the given class hash, constructor calldata, and salt.
 /// Returns the deployed address and the transaction result.
 pub async fn deploy_contract(
-    class_hash: FieldElement,
-    constructor_calldata: Vec<FieldElement>,
+    class_hash: Felt,
+    constructor_calldata: Vec<Felt>,
     deployer: &StarknetAccount,
-) -> (FieldElement, InvokeTransactionResult) {
+) -> (Felt, InvokeTransactionResult) {
     let contract_factory = ContractFactory::new(class_hash, deployer);
     let salt = felt!("0");
 
@@ -37,7 +37,7 @@ pub async fn deploy_contract(
         .await
         .expect("Failed to get transaction receipt");
 
-    match receipt.execution_result() {
+    match receipt.receipt.execution_result() {
         ExecutionResult::Reverted { reason } => {
             panic!("Deployment reverted: {}", reason)
         }
@@ -52,7 +52,7 @@ pub async fn deploy_contract(
 /// * `path` - The path to the contract artifact.
 /// # Returns
 /// The contract artifact.
-fn contract_artifacts(contract_name: &str) -> eyre::Result<(FlattenedSierraClass, FieldElement)> {
+fn contract_artifacts(contract_name: &str) -> eyre::Result<(FlattenedSierraClass, Felt)> {
     let artifact_path = format!("{BUILD_PATH_PREFIX}{contract_name}.contract_class.json");
     let file = std::fs::File::open(artifact_path.clone())?;
     let sierra_class: SierraClass = serde_json::from_reader(file)?;
@@ -74,7 +74,7 @@ fn contract_artifacts(contract_name: &str) -> eyre::Result<(FlattenedSierraClass
 async fn declare_contract(
     account: &StarknetAccount,
     contract_name: &str,
-) -> eyre::Result<FieldElement> {
+) -> eyre::Result<Felt> {
     // Load the contract artifact.
     let (flattened_class, compiled_class_hash) = contract_artifacts(contract_name)?;
     let class_hash = flattened_class.class_hash();
@@ -108,11 +108,11 @@ where
     panic!("Max poll count exceeded.");
 }
 
-type TransactionReceiptResult = Result<MaybePendingTransactionReceipt, ProviderError>;
+type TransactionReceiptResult = Result<TransactionReceiptWithBlockInfo, ProviderError>;
 
 pub async fn get_transaction_receipt(
     rpc: &AnyProvider,
-    transaction_hash: FieldElement,
+    transaction_hash: Felt,
 ) -> TransactionReceiptResult {
     // there is a delay between the transaction being available at the client
     // and the sealing of the block, hence sleeping for 100ms
@@ -132,7 +132,7 @@ pub async fn get_transaction_receipt(
 /// * `class_hash` - The contract class hash.
 /// # Returns
 /// `true` if the contract class is already declared, `false` otherwise.
-async fn is_already_declared<P>(provider: &P, class_hash: &FieldElement) -> eyre::Result<bool>
+async fn is_already_declared<P>(provider: &P, class_hash: &Felt) -> eyre::Result<bool>
 where
     P: Provider,
 {
@@ -167,7 +167,7 @@ pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
     let oracle_ancillary = declare_contract(deployer, "mock_oracle_ancillary")
         .await
         .map_err(|e| eyre::eyre!("Failed to declare oracle ancillary contract: {}", e))?;
-    let optimistic_oracle_v1: FieldElement = declare_contract(deployer, "optimistic_oracle_v1")
+    let optimistic_oracle_v1: Felt = declare_contract(deployer, "optimistic_oracle_v1")
         .await
         .map_err(|e| eyre::eyre!("Failed to declare oo contract: {}", e))?;
     Ok(Codes {
@@ -181,11 +181,11 @@ pub async fn declare_all(deployer: &StarknetAccount) -> eyre::Result<Codes> {
 }
 
 pub async fn execute_call(
-    contract: FieldElement,
+    contract: Felt,
     selector: &str,
-    calldata: Vec<FieldElement>,
+    calldata: Vec<Felt>,
     owner: &StarknetAccount,
-) -> FieldElement {
+) -> Felt {
     let result = owner
         .execute(vec![Call {
             to: contract,

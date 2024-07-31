@@ -5,7 +5,7 @@ use super::{
     utils::{deploy_contract, execute_call},
 };
 use log::info;
-use starknet::{accounts::Account, core::types::FieldElement};
+use starknet::{accounts::Account, core::types::Felt};
 use crate::bind::{finder::finder};
 
 pub async fn deploy_core(
@@ -81,30 +81,30 @@ pub async fn deploy_core(
 }
 
 pub async fn deploy_ownable_contract(
-    class_hash: FieldElement,
+    class_hash: Felt,
     deployer: &StarknetAccount,
     owner: &StarknetAccount,
-) -> eyre::Result<FieldElement> {
+) -> eyre::Result<Felt> {
     let res = deploy_contract(class_hash, vec![owner.address()], deployer).await;
     Ok(res.0)
 }
 
 pub async fn deploy_oracle_ancillary(
-    class_hash: FieldElement,
+    class_hash: Felt,
     deployer: &StarknetAccount,
     owner: &StarknetAccount,
-    finder: FieldElement,
-) -> eyre::Result<FieldElement> {
+    finder: Felt,
+) -> eyre::Result<Felt> {
     let res = deploy_contract(class_hash, vec![finder], deployer).await;
     Ok(res.0)
 }
 
 pub async fn deploy_optimistic_oracle(
-    class_hash: FieldElement,
+    class_hash: Felt,
     deployer: &StarknetAccount,
     owner: &StarknetAccount,
     oo_deployment_arguments: OODeploymentArguments,
-) -> eyre::Result<FieldElement> {
+) -> eyre::Result<Felt> {
     let res = deploy_contract(
         class_hash,
         vec![

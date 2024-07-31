@@ -1,11 +1,11 @@
 #[derive(Debug)]
 pub struct address_whitelist<A: starknet::accounts::ConnectedAccount + Sync> {
-    pub address: starknet::core::types::FieldElement,
+    pub address: starknet::core::types::Felt,
     pub account: A,
     pub block_id: starknet::core::types::BlockId,
 }
 impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
-    pub fn new(address: starknet::core::types::FieldElement, account: A) -> Self {
+    pub fn new(address: starknet::core::types::Felt, account: A) -> Self {
         Self {
             address,
             account,
@@ -14,24 +14,27 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
             ),
         }
     }
-    pub fn set_contract_address(mut self, address: starknet::core::types::FieldElement) {
+    pub fn set_contract_address(&mut self, address: starknet::core::types::Felt) {
         self.address = address;
     }
     pub fn provider(&self) -> &A::Provider {
         self.account.provider()
     }
-    pub fn set_block(mut self, block_id: starknet::core::types::BlockId) {
+    pub fn set_block(&mut self, block_id: starknet::core::types::BlockId) {
         self.block_id = block_id;
+    }
+    pub fn with_block(self, block_id: starknet::core::types::BlockId) -> Self {
+        Self { block_id, ..self }
     }
 }
 #[derive(Debug)]
 pub struct address_whitelistReader<P: starknet::providers::Provider + Sync> {
-    pub address: starknet::core::types::FieldElement,
+    pub address: starknet::core::types::Felt,
     pub provider: P,
     pub block_id: starknet::core::types::BlockId,
 }
 impl<P: starknet::providers::Provider + Sync> address_whitelistReader<P> {
-    pub fn new(address: starknet::core::types::FieldElement, provider: P) -> Self {
+    pub fn new(address: starknet::core::types::Felt, provider: P) -> Self {
         Self {
             address,
             provider,
@@ -40,79 +43,20 @@ impl<P: starknet::providers::Provider + Sync> address_whitelistReader<P> {
             ),
         }
     }
-    pub fn set_contract_address(mut self, address: starknet::core::types::FieldElement) {
+    pub fn set_contract_address(&mut self, address: starknet::core::types::Felt) {
         self.address = address;
     }
     pub fn provider(&self) -> &P {
         &self.provider
     }
-    pub fn set_block(mut self, block_id: starknet::core::types::BlockId) {
+    pub fn set_block(&mut self, block_id: starknet::core::types::BlockId) {
         self.block_id = block_id;
     }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct OwnershipTransferred {
-    pub previous_owner: cainome::cairo_serde::ContractAddress,
-    pub new_owner: cainome::cairo_serde::ContractAddress,
-}
-impl cainome::cairo_serde::CairoSerde for OwnershipTransferred {
-    type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = None;
-    #[inline]
-    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        let mut __size = 0;
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.previous_owner,
-            );
-        __size
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &__rust.new_owner,
-            );
-        __size
-    }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(
-                    &__rust.previous_owner,
-                ),
-            );
-        __out
-            .extend(
-                cainome::cairo_serde::ContractAddress::cairo_serialize(&__rust.new_owner),
-            );
-        __out
-    }
-    fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
-        __offset: usize,
-    ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let mut __offset = __offset;
-        let previous_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
-                &previous_owner,
-            );
-        let new_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
-            __felts,
-            __offset,
-        )?;
-        __offset
-            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(&new_owner);
-        Ok(OwnershipTransferred {
-            previous_owner,
-            new_owner,
-        })
+    pub fn with_block(self, block_id: starknet::core::types::BlockId) -> Self {
+        Self { block_id, ..self }
     }
 }
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RemovedFromWhitelist {
     pub removed_address: cainome::cairo_serde::ContractAddress,
 }
@@ -128,10 +72,8 @@ impl cainome::cairo_serde::CairoSerde for RemovedFromWhitelist {
             );
         __size
     }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+    fn cairo_serialize(__rust: &Self::RustType) -> Vec<starknet::core::types::Felt> {
+        let mut __out: Vec<starknet::core::types::Felt> = vec![];
         __out
             .extend(
                 cainome::cairo_serde::ContractAddress::cairo_serialize(
@@ -141,7 +83,7 @@ impl cainome::cairo_serde::CairoSerde for RemovedFromWhitelist {
         __out
     }
     fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
+        __felts: &[starknet::core::types::Felt],
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
         let mut __offset = __offset;
@@ -158,7 +100,7 @@ impl cainome::cairo_serde::CairoSerde for RemovedFromWhitelist {
         })
     }
 }
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AddedToWhitelist {
     pub added_address: cainome::cairo_serde::ContractAddress,
 }
@@ -174,10 +116,8 @@ impl cainome::cairo_serde::CairoSerde for AddedToWhitelist {
             );
         __size
     }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+    fn cairo_serialize(__rust: &Self::RustType) -> Vec<starknet::core::types::Felt> {
+        let mut __out: Vec<starknet::core::types::Felt> = vec![];
         __out
             .extend(
                 cainome::cairo_serde::ContractAddress::cairo_serialize(
@@ -187,7 +127,7 @@ impl cainome::cairo_serde::CairoSerde for AddedToWhitelist {
         __out
     }
     fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
+        __felts: &[starknet::core::types::Felt],
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
         let mut __offset = __offset;
@@ -202,7 +142,7 @@ impl cainome::cairo_serde::CairoSerde for AddedToWhitelist {
         Ok(AddedToWhitelist { added_address })
     }
 }
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, serde::Serialize, serde::Deserialize)]
 pub struct OwnershipTransferStarted {
     pub previous_owner: cainome::cairo_serde::ContractAddress,
     pub new_owner: cainome::cairo_serde::ContractAddress,
@@ -223,10 +163,8 @@ impl cainome::cairo_serde::CairoSerde for OwnershipTransferStarted {
             );
         __size
     }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        let mut __out: Vec<starknet::core::types::FieldElement> = vec![];
+    fn cairo_serialize(__rust: &Self::RustType) -> Vec<starknet::core::types::Felt> {
+        let mut __out: Vec<starknet::core::types::Felt> = vec![];
         __out
             .extend(
                 cainome::cairo_serde::ContractAddress::cairo_serialize(
@@ -240,7 +178,7 @@ impl cainome::cairo_serde::CairoSerde for OwnershipTransferStarted {
         __out
     }
     fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
+        __felts: &[starknet::core::types::Felt],
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
         let mut __offset = __offset;
@@ -264,53 +202,67 @@ impl cainome::cairo_serde::CairoSerde for OwnershipTransferStarted {
         })
     }
 }
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub enum Event {}
-impl cainome::cairo_serde::CairoSerde for Event {
+#[derive(Debug, PartialEq, PartialOrd, Clone, serde::Serialize, serde::Deserialize)]
+pub struct OwnershipTransferred {
+    pub previous_owner: cainome::cairo_serde::ContractAddress,
+    pub new_owner: cainome::cairo_serde::ContractAddress,
+}
+impl cainome::cairo_serde::CairoSerde for OwnershipTransferred {
     type RustType = Self;
-    const SERIALIZED_SIZE: std::option::Option<usize> = std::option::Option::None;
+    const SERIALIZED_SIZE: std::option::Option<usize> = None;
     #[inline]
     fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
-        match __rust {
-            _ => 0,
-        }
+        let mut __size = 0;
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.previous_owner,
+            );
+        __size
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &__rust.new_owner,
+            );
+        __size
     }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
-        match __rust {
-            _ => vec![],
-        }
+    fn cairo_serialize(__rust: &Self::RustType) -> Vec<starknet::core::types::Felt> {
+        let mut __out: Vec<starknet::core::types::Felt> = vec![];
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(
+                    &__rust.previous_owner,
+                ),
+            );
+        __out
+            .extend(
+                cainome::cairo_serde::ContractAddress::cairo_serialize(&__rust.new_owner),
+            );
+        __out
     }
     fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
+        __felts: &[starknet::core::types::Felt],
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let __index: u128 = __felts[__offset].try_into().unwrap();
-        match __index as usize {
-            _ => {
-                return Err(
-                    cainome::cairo_serde::Error::Deserialize(
-                        format!("Index not handle for enum {}", "Event"),
-                    ),
-                );
-            }
-        }
+        let mut __offset = __offset;
+        let previous_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(
+                &previous_owner,
+            );
+        let new_owner = cainome::cairo_serde::ContractAddress::cairo_deserialize(
+            __felts,
+            __offset,
+        )?;
+        __offset
+            += cainome::cairo_serde::ContractAddress::cairo_serialized_size(&new_owner);
+        Ok(OwnershipTransferred {
+            previous_owner,
+            new_owner,
+        })
     }
 }
-impl TryFrom<starknet::core::types::EmittedEvent> for Event {
-    type Error = String;
-    fn try_from(
-        event: starknet::core::types::EmittedEvent,
-    ) -> Result<Self, Self::Error> {
-        use cainome::cairo_serde::CairoSerde;
-        if event.keys.is_empty() {
-            return Err("Event has no key".to_string());
-        }
-        Err(format!("Could not match any event from keys {:?}", event.keys))
-    }
-}
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, serde::Serialize, serde::Deserialize)]
 pub enum Event {
     AddedToWhitelist(AddedToWhitelist),
     RemovedFromWhitelist(RemovedFromWhitelist),
@@ -334,9 +286,7 @@ impl cainome::cairo_serde::CairoSerde for Event {
             _ => 0,
         }
     }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
+    fn cairo_serialize(__rust: &Self::RustType) -> Vec<starknet::core::types::Felt> {
         match __rust {
             Event::AddedToWhitelist(val) => {
                 let mut temp = vec![];
@@ -366,10 +316,11 @@ impl cainome::cairo_serde::CairoSerde for Event {
         }
     }
     fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
+        __felts: &[starknet::core::types::Felt],
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let __index: u128 = __felts[__offset].try_into().unwrap();
+        let __f = __felts[__offset];
+        let __index = u128::from_be_bytes(__f.to_bytes_be()[16..].try_into().unwrap());
         match __index as usize {
             0usize => {
                 Ok(
@@ -603,7 +554,52 @@ impl TryFrom<starknet::core::types::EmittedEvent> for Event {
         Err(format!("Could not match any event from keys {:?}", event.keys))
     }
 }
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, serde::Serialize, serde::Deserialize)]
+pub enum Event {}
+impl cainome::cairo_serde::CairoSerde for Event {
+    type RustType = Self;
+    const SERIALIZED_SIZE: std::option::Option<usize> = std::option::Option::None;
+    #[inline]
+    fn cairo_serialized_size(__rust: &Self::RustType) -> usize {
+        match __rust {
+            _ => 0,
+        }
+    }
+    fn cairo_serialize(__rust: &Self::RustType) -> Vec<starknet::core::types::Felt> {
+        match __rust {
+            _ => vec![],
+        }
+    }
+    fn cairo_deserialize(
+        __felts: &[starknet::core::types::Felt],
+        __offset: usize,
+    ) -> cainome::cairo_serde::Result<Self::RustType> {
+        let __f = __felts[__offset];
+        let __index = u128::from_be_bytes(__f.to_bytes_be()[16..].try_into().unwrap());
+        match __index as usize {
+            _ => {
+                return Err(
+                    cainome::cairo_serde::Error::Deserialize(
+                        format!("Index not handle for enum {}", "Event"),
+                    ),
+                );
+            }
+        }
+    }
+}
+impl TryFrom<starknet::core::types::EmittedEvent> for Event {
+    type Error = String;
+    fn try_from(
+        event: starknet::core::types::EmittedEvent,
+    ) -> Result<Self, Self::Error> {
+        use cainome::cairo_serde::CairoSerde;
+        if event.keys.is_empty() {
+            return Err("Event has no key".to_string());
+        }
+        Err(format!("Could not match any event from keys {:?}", event.keys))
+    }
+}
+#[derive(Debug, PartialEq, PartialOrd, Clone, serde::Serialize, serde::Deserialize)]
 pub enum OwnableCptEvent {
     OwnershipTransferred(OwnershipTransferred),
     OwnershipTransferStarted(OwnershipTransferStarted),
@@ -623,9 +619,7 @@ impl cainome::cairo_serde::CairoSerde for OwnableCptEvent {
             _ => 0,
         }
     }
-    fn cairo_serialize(
-        __rust: &Self::RustType,
-    ) -> Vec<starknet::core::types::FieldElement> {
+    fn cairo_serialize(__rust: &Self::RustType) -> Vec<starknet::core::types::Felt> {
         match __rust {
             OwnableCptEvent::OwnershipTransferred(val) => {
                 let mut temp = vec![];
@@ -643,10 +637,11 @@ impl cainome::cairo_serde::CairoSerde for OwnableCptEvent {
         }
     }
     fn cairo_deserialize(
-        __felts: &[starknet::core::types::FieldElement],
+        __felts: &[starknet::core::types::Felt],
         __offset: usize,
     ) -> cainome::cairo_serde::Result<Self::RustType> {
-        let __index: u128 = __felts[__offset].try_into().unwrap();
+        let __f = __felts[__offset];
+        let __index = u128::from_be_bytes(__f.to_bytes_be()[16..].try_into().unwrap());
         match __index as usize {
             0usize => {
                 Ok(
@@ -870,10 +865,11 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
         }
     }
     #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
     pub fn add_to_whitelist(
         &self,
         new_element: &cainome::cairo_serde::ContractAddress,
-    ) -> starknet::accounts::Execution<A> {
+    ) -> starknet::accounts::ExecutionV1<A> {
         use cainome::cairo_serde::CairoSerde;
         let mut __calldata = vec![];
         __calldata
@@ -883,7 +879,7 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
             selector: starknet::macros::selector!("add_to_whitelist"),
             calldata: __calldata,
         };
-        self.account.execute(vec![__call])
+        self.account.execute_v1(vec![__call])
     }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
@@ -904,10 +900,11 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
         }
     }
     #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
     pub fn remove_from_whitelist(
         &self,
         element_to_remove: &cainome::cairo_serde::ContractAddress,
-    ) -> starknet::accounts::Execution<A> {
+    ) -> starknet::accounts::ExecutionV1<A> {
         use cainome::cairo_serde::CairoSerde;
         let mut __calldata = vec![];
         __calldata
@@ -919,7 +916,7 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
             selector: starknet::macros::selector!("remove_from_whitelist"),
             calldata: __calldata,
         };
-        self.account.execute(vec![__call])
+        self.account.execute_v1(vec![__call])
     }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
@@ -938,10 +935,11 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
         }
     }
     #[allow(clippy::ptr_arg)]
+    #[allow(clippy::too_many_arguments)]
     pub fn transfer_ownership(
         &self,
         new_owner: &cainome::cairo_serde::ContractAddress,
-    ) -> starknet::accounts::Execution<A> {
+    ) -> starknet::accounts::ExecutionV1<A> {
         use cainome::cairo_serde::CairoSerde;
         let mut __calldata = vec![];
         __calldata
@@ -951,7 +949,7 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
             selector: starknet::macros::selector!("transfer_ownership"),
             calldata: __calldata,
         };
-        self.account.execute(vec![__call])
+        self.account.execute_v1(vec![__call])
     }
     #[allow(clippy::ptr_arg)]
     #[allow(clippy::too_many_arguments)]
@@ -965,7 +963,8 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
         }
     }
     #[allow(clippy::ptr_arg)]
-    pub fn renounce_ownership(&self) -> starknet::accounts::Execution<A> {
+    #[allow(clippy::too_many_arguments)]
+    pub fn renounce_ownership(&self) -> starknet::accounts::ExecutionV1<A> {
         use cainome::cairo_serde::CairoSerde;
         let mut __calldata = vec![];
         let __call = starknet::accounts::Call {
@@ -973,7 +972,7 @@ impl<A: starknet::accounts::ConnectedAccount + Sync> address_whitelist<A> {
             selector: starknet::macros::selector!("renounce_ownership"),
             calldata: __calldata,
         };
-        self.account.execute(vec![__call])
+        self.account.execute_v1(vec![__call])
     }
 }
 impl<P: starknet::providers::Provider + Sync> address_whitelistReader<P> {
