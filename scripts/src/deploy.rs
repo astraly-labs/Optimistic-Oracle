@@ -4,12 +4,15 @@ use super::{
     types::{oracle_interfaces, Codes, OOConfig, StarknetAccount},
     utils::{deploy_contract, get_transaction_receipt},
 };
+use crate::bind::{
+    address_whitelist::address_whitelist, finder::finder,
+    identifier_whitelist::identifier_whitelist, store::store,
+};
 use anyhow::Result;
-use starknet::{accounts::ConnectedAccount, macros::felt};
-use log::{info, error};
-use starknet::{accounts::Account, core::types::Felt, providers::Provider};
-use crate::bind::{finder::finder, store::store, identifier_whitelist::identifier_whitelist, address_whitelist::address_whitelist};
 use cainome::cairo_serde::ContractAddress;
+use log::{error, info};
+use starknet::{accounts::Account, core::types::Felt, providers::Provider};
+use starknet::{accounts::ConnectedAccount, macros::felt};
 
 pub async fn deploy_core(
     owner: &StarknetAccount,
@@ -56,7 +59,8 @@ pub async fn deploy_core(
         },
         owner,
     )
-    .await{
+    .await
+    {
         Ok(_) => info!("Contract configuration completed successfully"),
         Err(e) => error!("An error occurred during contract configuration: {:?}", e),
     }
@@ -129,9 +133,15 @@ pub async fn configure_contracts(
     default_configuration: &OOConfig,
     contracts: LibraryContracts,
     owner: &StarknetAccount,
-) -> Result<()>{
+) -> Result<()> {
     let store = store::new(contracts.store, owner);
-    let store_res = store.set_final_fee(&ContractAddress(default_configuration.erc20_token.into()), &default_configuration.final_fee).send().await?;
+    let store_res = store
+        .set_final_fee(
+            &ContractAddress(default_configuration.erc20_token.into()),
+            &default_configuration.final_fee,
+        )
+        .send()
+        .await?;
 
     info!(
         "Set final fee for store contract with tx hash: {:x?}",
@@ -139,10 +149,17 @@ pub async fn configure_contracts(
     );
 
     tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
-    assert!(get_transaction_receipt(owner.provider(), store_res.transaction_hash).await.is_ok()); 
+    assert!(
+        get_transaction_receipt(owner.provider(), store_res.transaction_hash)
+            .await
+            .is_ok()
+    );
 
     let identifier_whitelist = identifier_whitelist::new(contracts.identifier_whitelist, owner);
-    let identifier_whitelist_res = identifier_whitelist.add_supported_identifier(&ASSERT_TRUTH).send().await?; 
+    let identifier_whitelist_res = identifier_whitelist
+        .add_supported_identifier(&ASSERT_TRUTH)
+        .send()
+        .await?;
 
     info!(
         "Add supported identifer for identifier whitelist contract with tx hash: {:x?}",
@@ -150,32 +167,56 @@ pub async fn configure_contracts(
     );
     tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
 
-    assert!(get_transaction_receipt(owner.provider(), identifier_whitelist_res.transaction_hash).await.is_ok()); 
+    assert!(
+        get_transaction_receipt(owner.provider(), identifier_whitelist_res.transaction_hash)
+            .await
+            .is_ok()
+    );
 
-    let address_whitelist = address_whitelist::new(contracts.address_whitelist, owner); 
-    let address_whitelist_res = address_whitelist.add_to_whitelist(&ContractAddress(default_configuration.erc20_token)).send().await?;
+    let address_whitelist = address_whitelist::new(contracts.address_whitelist, owner);
+    let address_whitelist_res = address_whitelist
+        .add_to_whitelist(&ContractAddress(default_configuration.erc20_token))
+        .send()
+        .await?;
 
     info!(
         "Add collateral address whitelist for address whitelist contract with tx hash: {:x?}",
         address_whitelist_res.transaction_hash
     );
 
-    assert!(get_transaction_receipt(owner.provider(), address_whitelist_res.transaction_hash).await.is_ok()); 
-
+    assert!(
+        get_transaction_receipt(owner.provider(), address_whitelist_res.transaction_hash)
+            .await
+            .is_ok()
+    );
 
     let finder = finder::new(contracts.finder, owner);
-    let finder_res = finder.change_implementation_address( &oracle_interfaces::OracleInterface::IDENTIFIER_WHITELIST.as_str(),
-    &ContractAddress(contracts.identifier_whitelist)).send().await?;
+    let finder_res = finder
+        .change_implementation_address(
+            &oracle_interfaces::OracleInterface::IDENTIFIER_WHITELIST.as_str(),
+            &ContractAddress(contracts.identifier_whitelist),
+        )
+        .send()
+        .await?;
 
     info!(
         "Set implementation address for IDENTIFIER_WHITELIST: {:x?}",
         finder_res.transaction_hash
     );
     tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
-    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
+    assert!(
+        get_transaction_receipt(owner.provider(), finder_res.transaction_hash)
+            .await
+            .is_ok()
+    );
 
-    let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::COLLATERAL_WHITELIST.as_str(),
-    &ContractAddress(contracts.address_whitelist)).send().await?; 
+    let finder_res = finder
+        .change_implementation_address(
+            &oracle_interfaces::OracleInterface::COLLATERAL_WHITELIST.as_str(),
+            &ContractAddress(contracts.address_whitelist),
+        )
+        .send()
+        .await?;
 
     info!(
         "Set implementation address for COLLATERAL_WHITELIST: {:x?}",
@@ -183,10 +224,19 @@ pub async fn configure_contracts(
     );
 
     tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
-    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
+    assert!(
+        get_transaction_receipt(owner.provider(), finder_res.transaction_hash)
+            .await
+            .is_ok()
+    );
 
-    let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::ORACLE.as_str(),
-    &ContractAddress(contracts.oracle)).send().await?; 
+    let finder_res = finder
+        .change_implementation_address(
+            &oracle_interfaces::OracleInterface::ORACLE.as_str(),
+            &ContractAddress(contracts.oracle),
+        )
+        .send()
+        .await?;
 
     info!(
         "Set implementation address for ORACLE: {:x?}",
@@ -194,10 +244,19 @@ pub async fn configure_contracts(
     );
 
     tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
-    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
+    assert!(
+        get_transaction_receipt(owner.provider(), finder_res.transaction_hash)
+            .await
+            .is_ok()
+    );
 
-    let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::STORE.as_str(),
-    &ContractAddress(contracts.store)).send().await?; 
+    let finder_res = finder
+        .change_implementation_address(
+            &oracle_interfaces::OracleInterface::STORE.as_str(),
+            &ContractAddress(contracts.store),
+        )
+        .send()
+        .await?;
 
     info!(
         "Set implementation address for STORE: {:x?}",
@@ -205,8 +264,11 @@ pub async fn configure_contracts(
     );
 
     tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
-    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
+    assert!(
+        get_transaction_receipt(owner.provider(), finder_res.transaction_hash)
+            .await
+            .is_ok()
+    );
 
     Ok(())
-
 }

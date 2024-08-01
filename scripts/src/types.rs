@@ -1,8 +1,5 @@
 use starknet::{
-    accounts::SingleOwnerAccount,
-    core::types::Felt,
-    macros::felt,
-    providers::AnyProvider,
+    accounts::SingleOwnerAccount, core::types::Felt, macros::felt, providers::AnyProvider,
     signers::LocalWallet,
 };
 

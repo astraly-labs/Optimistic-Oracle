@@ -3,7 +3,10 @@ use log::info;
 use serde_json;
 use starknet::{
     accounts::{ExecutionEncoding, SingleOwnerAccount},
-    core::{chain_id, types::{Felt, BlockId, BlockTag,}},
+    core::{
+        chain_id,
+        types::{BlockId, BlockTag, Felt},
+    },
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, Url},
     signers::{LocalWallet, SigningKey},
 };
@@ -11,13 +14,15 @@ use starknet::{
 use std::{env, fs::File, io::Write};
 
 use scripts::types::FormattedCodes;
+
+const PROVIDER_URL: &str = "https://starknet-sepolia.public.blastapi.io/rpc/v0_7";
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     env_logger::init();
 
     dotenv().ok();
     let provider = AnyProvider::JsonRpcHttp(JsonRpcClient::new(HttpTransport::new(
-        Url::parse("https://starknet-sepolia.public.blastapi.io/rpc/v0_7").unwrap(),
+        Url::parse(PROVIDER_URL).unwrap(),
     )));
 
     // Test out the provider
@@ -59,7 +64,8 @@ async fn main() -> eyre::Result<()> {
             high: 0,
         },
     };
-    let deployments = scripts::deploy::deploy_core(&account, &account, oo_config, &declarations).await?;
+    let deployments =
+        scripts::deploy::deploy_core(&account, &account, oo_config, &declarations).await?;
 
     // Create the formatted structure
     let formatted_codes = FormattedCodes {

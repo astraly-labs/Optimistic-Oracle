@@ -4,8 +4,8 @@ use starknet::{
     contract::ContractFactory,
     core::types::{
         contract::{CompiledClass, SierraClass},
-        BlockId, BlockTag, ExecutionResult, Felt, FlattenedSierraClass,
-        InvokeTransactionResult, TransactionReceiptWithBlockInfo,StarknetError,
+        BlockId, BlockTag, ExecutionResult, Felt, FlattenedSierraClass, InvokeTransactionResult,
+        StarknetError, TransactionReceiptWithBlockInfo,
     },
     core::utils::get_selector_from_name,
     macros::felt,
@@ -71,10 +71,7 @@ fn contract_artifacts(contract_name: &str) -> eyre::Result<(FlattenedSierraClass
 /// * `contract_name` - The contract name.
 /// # Returns
 /// The contract class hash.
-async fn declare_contract(
-    account: &StarknetAccount,
-    contract_name: &str,
-) -> eyre::Result<Felt> {
+async fn declare_contract(account: &StarknetAccount, contract_name: &str) -> eyre::Result<Felt> {
     // Load the contract artifact.
     let (flattened_class, compiled_class_hash) = contract_artifacts(contract_name)?;
     let class_hash = flattened_class.class_hash();
