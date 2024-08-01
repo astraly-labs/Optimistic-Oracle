@@ -2,12 +2,12 @@ use crate::types::{LibraryContracts, OODeploymentArguments, ASSERT_TRUTH};
 
 use super::{
     types::{oracle_interfaces, Codes, OOConfig, StarknetAccount},
-    utils::deploy_contract,
+    utils::{deploy_contract, get_transaction_receipt},
 };
 use anyhow::Result;
-
+use starknet::{accounts::ConnectedAccount, macros::felt};
 use log::{info, error};
-use starknet::{accounts::Account, core::types::Felt};
+use starknet::{accounts::Account, core::types::Felt, providers::Provider};
 use crate::bind::{finder::finder, store::store, identifier_whitelist::identifier_whitelist, address_whitelist::address_whitelist};
 use cainome::cairo_serde::ContractAddress;
 
@@ -138,6 +138,9 @@ pub async fn configure_contracts(
         store_res.transaction_hash
     );
 
+    tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
+    assert!(get_transaction_receipt(owner.provider(), store_res.transaction_hash).await.is_ok()); 
+
     let identifier_whitelist = identifier_whitelist::new(contracts.identifier_whitelist, owner);
     let identifier_whitelist_res = identifier_whitelist.add_supported_identifier(&ASSERT_TRUTH).send().await?; 
 
@@ -145,6 +148,9 @@ pub async fn configure_contracts(
         "Add supported identifer for identifier whitelist contract with tx hash: {:x?}",
         identifier_whitelist_res.transaction_hash
     );
+    tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
+
+    assert!(get_transaction_receipt(owner.provider(), identifier_whitelist_res.transaction_hash).await.is_ok()); 
 
     let address_whitelist = address_whitelist::new(contracts.address_whitelist, owner); 
     let address_whitelist_res = address_whitelist.add_to_whitelist(&ContractAddress(default_configuration.erc20_token)).send().await?;
@@ -154,6 +160,9 @@ pub async fn configure_contracts(
         address_whitelist_res.transaction_hash
     );
 
+    assert!(get_transaction_receipt(owner.provider(), address_whitelist_res.transaction_hash).await.is_ok()); 
+
+
     let finder = finder::new(contracts.finder, owner);
     let finder_res = finder.change_implementation_address( &oracle_interfaces::OracleInterface::IDENTIFIER_WHITELIST.as_str(),
     &ContractAddress(contracts.identifier_whitelist)).send().await?;
@@ -162,6 +171,8 @@ pub async fn configure_contracts(
         "Set implementation address for IDENTIFIER_WHITELIST: {:x?}",
         finder_res.transaction_hash
     );
+    tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
+    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
 
     let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::COLLATERAL_WHITELIST.as_str(),
     &ContractAddress(contracts.address_whitelist)).send().await?; 
@@ -171,6 +182,9 @@ pub async fn configure_contracts(
         finder_res.transaction_hash
     );
 
+    tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
+    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
+
     let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::ORACLE.as_str(),
     &ContractAddress(contracts.oracle)).send().await?; 
 
@@ -179,6 +193,8 @@ pub async fn configure_contracts(
         finder_res.transaction_hash
     );
 
+    tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
+    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
 
     let finder_res = finder.change_implementation_address(&oracle_interfaces::OracleInterface::STORE.as_str(),
     &ContractAddress(contracts.store)).send().await?; 
@@ -187,6 +203,9 @@ pub async fn configure_contracts(
         "Set implementation address for STORE: {:x?}",
         finder_res.transaction_hash
     );
+
+    tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
+    assert!(get_transaction_receipt(owner.provider(), finder_res.transaction_hash).await.is_ok()); 
 
     Ok(())
 

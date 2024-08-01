@@ -26,9 +26,9 @@ pub async fn deploy_contract(
     deployer: &StarknetAccount,
 ) -> (Felt, InvokeTransactionResult) {
     let contract_factory = ContractFactory::new(class_hash, deployer);
-    let salt = felt!("1122");
+    let salt = felt!("1234");
 
-    let deployment = contract_factory.deploy(constructor_calldata, salt, false);
+    let deployment = contract_factory.deploy_v1(constructor_calldata, salt, true);
 
     tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
     let deploy_res = deployment.send().await.expect("Failed to deploy contract");
@@ -83,7 +83,7 @@ async fn declare_contract(
     if !is_already_declared(account.provider(), &class_hash).await? {
         info!("\n==> Declaring Contract: {contract_name}");
         account
-            .declare(Arc::new(flattened_class), compiled_class_hash)
+            .declare_v2(Arc::new(flattened_class), compiled_class_hash)
             .send()
             .await?;
         info!("Declared Class Hash: {}", format!("{:#064x}", class_hash));

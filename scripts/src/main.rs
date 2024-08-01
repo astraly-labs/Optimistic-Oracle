@@ -3,7 +3,7 @@ use log::info;
 use serde_json;
 use starknet::{
     accounts::{ExecutionEncoding, SingleOwnerAccount},
-    core::{chain_id, types::Felt},
+    core::{chain_id, types::{Felt, BlockId, BlockTag,}},
     providers::{jsonrpc::HttpTransport, AnyProvider, JsonRpcClient, Provider, Url},
     signers::{LocalWallet, SigningKey},
 };
@@ -39,13 +39,15 @@ async fn main() -> eyre::Result<()> {
 
     // Set up the account (replace with your account address)
     let account_address = Felt::from_hex(&account_address).unwrap();
-    let account = SingleOwnerAccount::new(
+    let mut account = SingleOwnerAccount::new(
         provider,
         signer,
         account_address,
         chain_id::SEPOLIA,
         ExecutionEncoding::New,
     );
+
+    account.set_block_id(BlockId::Tag(BlockTag::Pending));
 
     let declarations = scripts::utils::declare_all(&account).await?;
 
