@@ -24,12 +24,16 @@ pub mod optimistic_oracle_v1 {
     };
     use core::poseidon::poseidon_hash_span;
     use optimistic_oracle::contracts::utils::convert::convert_byte_array_to_felt_array;
-
-    use starknet::{ContractAddress, contract_address_const};
+    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    use starknet::{ContractAddress, ClassHash, contract_address_const};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
     component!(
         path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent
     );
@@ -53,6 +57,8 @@ pub mod optimistic_oracle_v1 {
         ownable: OwnableComponent::Storage,
         #[substorage(v0)]
         reentrancy_guard: ReentrancyGuardComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
     }
 
 
@@ -86,6 +92,8 @@ pub mod optimistic_oracle_v1 {
         AssertionSettled: AssertionSettled,
         AssertionMade: AssertionMade,
         AssertionDisputed: AssertionDisputed,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
         #[flat]
         OwnableEvent: OwnableComponent::Event,
         #[flat]
@@ -151,6 +159,20 @@ pub mod optimistic_oracle_v1 {
         self.finder.write(IFinderDispatcher { contract_address: finder });
         self._set_admin_properties(default_currency, default_liveness, BURNED_BOND_PERCENTAGE);
         self.ownable.initializer(owner);
+    }
+
+
+    #[abi(embed_v0)]
+    impl Upgradeable of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable.upgrade(new_class_hash);
+        }
     }
 
     #[abi(embed_v0)]
