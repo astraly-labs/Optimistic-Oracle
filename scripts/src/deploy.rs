@@ -105,7 +105,7 @@ pub async fn deploy_oracle_ancillary(
     owner: &StarknetAccount,
     finder: Felt,
 ) -> eyre::Result<Felt> {
-    let res = deploy_contract(class_hash, vec![finder], deployer).await;
+    let res = deploy_contract(class_hash, vec![finder, owner.address()], deployer).await;
     Ok(res.0)
 }
 
