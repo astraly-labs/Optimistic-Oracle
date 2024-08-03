@@ -102,7 +102,7 @@ pub fn setup_mock_oracle_ancillary(
 ) -> (IOracleAncillaryDispatcher, IMockOracleAncillaryConfigurationDispatcher, EventSpy) {
     let oracle_ancillary_class = declare("mock_oracle_ancillary").unwrap();
     let (oracle_ancillary_addr, _) = oracle_ancillary_class
-        .deploy(@array![finder.contract_address.into()])
+        .deploy(@array![finder.contract_address.into(), OWNER().into()])
         .unwrap();
     let mut spy = spy_events(SpyOn::One(oracle_ancillary_addr));
     (

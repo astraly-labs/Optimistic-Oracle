@@ -1,14 +1,24 @@
 #[starknet::contract]
 pub mod mock_oracle_ancillary {
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, ClassHash};
     use optimistic_oracle::contracts::interfaces::{
         IFinderDispatcher, IFinderDispatcherTrait, IOracleAncillary,
         IMockOracleAncillaryConfiguration, IIdentifierWhitelistDispatcher,
         IIdentifierWhitelistDispatcherTrait
     };
+    use openzeppelin::access::ownable::OwnableComponent;
     use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
     use optimistic_oracle::contracts::utils::convert::convert_byte_array_to_felt_array;
     use core::poseidon::poseidon_hash_span;
+    use openzeppelin::upgrades::{interface::IUpgradeable, upgradeable::UpgradeableComponent};
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
 
     #[derive(starknet::Store, Drop)]
     pub struct Price {
@@ -60,7 +70,11 @@ pub mod mock_oracle_ancillary {
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         PriceRequestAdded: PriceRequestAdded,
-        PushedPrice: PushedPrice
+        PushedPrice: PushedPrice,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
     }
 
     #[storage]
@@ -70,12 +84,31 @@ pub mod mock_oracle_ancillary {
         query_indices: LegacyMap::<felt252, QueryIndex>,
         requested_prices_len: u128,
         requested_prices: LegacyMap::<u128, QueryPoint>,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
     }
 
 
     #[constructor]
-    fn constructor(ref self: ContractState, finder: ContractAddress,) {
+    fn constructor(ref self: ContractState, finder: ContractAddress, owner: ContractAddress) {
+        self.ownable.initializer(owner);
         self.finder.write(IFinderDispatcher { contract_address: finder });
+    }
+
+
+    #[abi(embed_v0)]
+    impl Upgradeable of IUpgradeable<ContractState> {
+        /// Upgrades the contract to a new implementation.
+        /// Callable only by the owner
+        /// # Arguments
+        ///
+        /// * `new_class_hash` - The class hash of the new implementation.
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable.upgrade(new_class_hash);
+        }
     }
 
     #[abi(embed_v0)]
