@@ -11,12 +11,13 @@ use optimistic_oracle::contracts::interfaces::{
     IMockOracleAncillaryConfigurationDispatcher, IStoreDispatcher, IStoreDispatcherTrait,
 };
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher};
+use optimistic_oracle::contracts::optimistic_oracle_v1::optimistic_oracle_v1::ORACLE_ADDRESS;
 use openzeppelin::utils::serde::SerializedAppend;
 use openzeppelin::access::ownable::interface::{IOwnableDispatcher, IOwnableDispatcherTrait};
 use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
 
 
-pub const INITIAL_SUPPLY: u256 = 10000000000;
+pub const INITIAL_SUPPLY: u256 = 1000000000000000000000000000;
 pub const DEFAULT_LIVENESS: u64 = 1000;
 pub const FINAL_FEE: u256 = 10000;
 
@@ -79,6 +80,7 @@ pub fn setup_optimistic_oracle(
     erc20: ERC20ABIDispatcher, finder: IFinderDispatcher, default_liveness: u64
 ) -> (IOptimisticOracleDispatcher, EventSpy) {
     let optimistic_oracle_class = declare("optimistic_oracle_v1").unwrap();
+    setup_mock_oracle();
     let res = optimistic_oracle_class
         .deploy(
             @array![
@@ -94,6 +96,11 @@ pub fn setup_optimistic_oracle(
     let (optimistic_oracle_addr, _) = res.unwrap();
     let mut spy = spy_events(SpyOn::One(optimistic_oracle_addr));
     (IOptimisticOracleDispatcher { contract_address: optimistic_oracle_addr }, spy)
+}
+
+fn setup_mock_oracle(){
+    let mock_oracle_class = declare("mock_oracle").unwrap();
+    mock_oracle_class.deploy_at(@array![],ORACLE_ADDRESS.try_into().unwrap()).unwrap();
 }
 
 

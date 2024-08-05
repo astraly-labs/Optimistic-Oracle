@@ -11,13 +11,14 @@ use optimistic_oracle::contracts::{
         IOptimisticOracleDispatcher, IOptimisticOracleDispatcherTrait, IStoreDispatcherTrait,
         IFinderDispatcherTrait, IIdentifierWhitelistDispatcherTrait,
         IAddressWhitelistDispatcherTrait, IMockOracleAncillaryConfigurationDispatcherTrait
-    }
+    }, 
+    optimistic_oracle_v1::optimistic_oracle_v1, 
 };
-use optimistic_oracle::contracts::optimistic_oracle_v1::optimistic_oracle_v1;
 use snforge_std::cheatcodes::events::EventAssertions;
 use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
 use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
+const DEFAULT_PRICE: u256= 400000000000000;
 #[test]
 fn test_oo_owner_verification() {
     let oo = oo_full_config();
@@ -83,7 +84,7 @@ fn test_oo_assert_truth_with_default() {
     let minimum_bond = oo.get_minimum_bond(erc20.contract_address);
     let ownable_erc20 = IOwnableDispatcher { contract_address: erc20.contract_address };
     start_prank(CheatTarget::One(ownable_erc20.contract_address), OWNER());
-    erc20.approve(oo.contract_address, minimum_bond);
+    erc20.approve(oo.contract_address, minimum_bond + DEFAULT_PRICE.into());
     stop_prank(CheatTarget::One(ownable_erc20.contract_address));
     let ownable = IOwnableDispatcher { contract_address: oo.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
@@ -101,7 +102,7 @@ fn test_oo_assert_truth_with_default() {
     assert_eq!(assertion.settlement_resolution, false);
     assert_eq!(assertion.assertion_time, time);
     assert_eq!(assertion.expiration_time, time + liveness);
-    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - minimum_bond);
+    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - minimum_bond - DEFAULT_PRICE.into());
 
     // now we can settle the assertion, without dispute
     start_warp(CheatTarget::One(oo.contract_address), starknet::get_block_timestamp() + liveness);
@@ -118,12 +119,13 @@ fn test_oo_assert_truth_with_default() {
     assert_eq!(assertion.settlement_resolution, true);
     assert_eq!(assertion.assertion_time, time);
     assert_eq!(assertion.expiration_time, time + liveness);
-    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY);
+    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - DEFAULT_PRICE.into());
     stop_warp(CheatTarget::One(oo.contract_address));
+
 
     // now we initiate a new assertion with a dispute process, but first, we need to provide the disputer with the necessary funds
     start_prank(CheatTarget::One(ownable_erc20.contract_address), OWNER());
-    erc20.approve(oo.contract_address, minimum_bond);
+    erc20.approve(oo.contract_address, minimum_bond + DEFAULT_PRICE.into());
     stop_prank(CheatTarget::One(ownable_erc20.contract_address));
     claim.append_word(0x1234, 2);
     let assertion_id = oo.assert_truth_with_defaults(claim, OWNER());
@@ -139,6 +141,7 @@ fn test_oo_assert_truth_with_default() {
     );
 
     oo.dispute_assertion(assertion_id, DISPUTER());
+
     let assertion = oo.get_assertion(assertion_id);
     assert_eq!(assertion.asserter, OWNER());
     assert_eq!(assertion.disputer, DISPUTER());
@@ -163,6 +166,7 @@ fn test_oo_assert_truth_with_default() {
     // once dispute is done, we can settle and conclude the process
 
     oo.settle_assertion(assertion_id);
+
     let assertion = oo.get_assertion(assertion_id);
     assert_eq!(assertion.asserter, OWNER());
     assert_eq!(assertion.disputer, DISPUTER());
@@ -177,7 +181,7 @@ fn test_oo_assert_truth_with_default() {
     assert_eq!(assertion.expiration_time, time + liveness);
     assert_eq!(erc20.balanceOf(DISPUTER()), 0);
     // So the owner balance should be the initial amount -  the amount sent to the oracle (because the owner sent minimum_bond to the disputer before the dispute process)
-    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - minimum_bond / 2);
+    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - minimum_bond / 2 - 2*DEFAULT_PRICE.into() );
     assert_eq!(erc20.balanceOf(store.contract_address), minimum_bond / 2);
     stop_warp(CheatTarget::One(oo.contract_address));
 }
