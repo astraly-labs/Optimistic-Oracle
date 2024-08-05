@@ -4,7 +4,7 @@ pub mod prediction_market {
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use optimistic_oracle::contracts::interfaces::{
         IFinderDispatcher, IFinderDispatcherTrait, IOptimisticOracleDispatcherTrait,
-        IOptimisticOracleDispatcher, IOptimisticOracleV3CallbackRecipient, IPredictionMarket,
+        IOptimisticOracleDispatcher, IOptimisticOracleCallbackRecipient, IPredictionMarket,
         IExtendedERC20Dispatcher, IExtendedERC20DispatcherTrait, IAddressWhitelistDispatcher,
         IAddressWhitelistDispatcherTrait
     };
@@ -146,7 +146,7 @@ pub mod prediction_market {
     }
 
     #[abi(embed_v0)]
-    impl IOptimisticOracleV3CallbackRecipientImpl of IOptimisticOracleV3CallbackRecipient<
+    impl IOptimisticOracleCallbackRecipientImpl of IOptimisticOracleCallbackRecipient<
         ContractState
     > {
         fn assertion_resolved_callback(
