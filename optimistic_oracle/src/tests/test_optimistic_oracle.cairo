@@ -14,6 +14,7 @@ use optimistic_oracle::contracts::{
     }, 
     optimistic_oracle_v1::optimistic_oracle_v1, 
 };
+use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
 use snforge_std::cheatcodes::events::EventAssertions;
 use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
 use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
@@ -60,7 +61,7 @@ fn test_oo_assert_truth_with_default() {
     identifier_whitelist.add_supported_identifier(optimistic_oracle_v1::DEFAULT_IDENTIFIER);
     let ownable = IOwnableDispatcher { contract_address: address_whitelist.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    address_whitelist.add_to_whitelist(erc20.contract_address);
+    address_whitelist.add_to_whitelist(erc20.contract_address, WhitelistType::Currency);
     let ownable = IOwnableDispatcher { contract_address: finder.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     finder

@@ -8,6 +8,7 @@ pub mod prediction_market {
         IExtendedERC20Dispatcher, IExtendedERC20DispatcherTrait, IAddressWhitelistDispatcher,
         IAddressWhitelistDispatcherTrait
     };
+    use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
     use optimistic_oracle::contracts::utils::keccak::compute_keccak_byte_array;
     use optimistic_oracle::contracts::mocks::full_erc20::full_erc20::{MINTER_ROLE, BURNER_ROLE};
     use optimistic_oracle::contracts::optimistic_oracle_v1::optimistic_oracle_v1::DEFAULT_IDENTIFIER;
@@ -137,7 +138,7 @@ pub mod prediction_market {
     ) {
         self.finder.write(IFinderDispatcher { contract_address: finder });
         assert(
-            self.get_collateral_whitelist().is_on_whitelist(currency), Errors::UNSUPPORTED_CURRENCY
+            self.get_collateral_whitelist().is_on_whitelist(currency, WhitelistType::Currency), Errors::UNSUPPORTED_CURRENCY
         );
         self.currency.write(ERC20ABIDispatcher { contract_address: currency });
         self.oo.write(IOptimisticOracleDispatcher { contract_address: optimistic_oracle });

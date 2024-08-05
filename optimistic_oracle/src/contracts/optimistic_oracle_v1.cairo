@@ -10,6 +10,7 @@ pub mod optimistic_oracle_v1 {
         IOracleAncillaryDispatcherTrait, IOptimisticOracleCallbackRecipientDispatcher,
         IOptimisticOracleCallbackRecipientDispatcherTrait, IOptimisticOracleCallbackRecipient
     };
+    use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
     use pragma_lib::abi::{IPragmaABIDispatcher, IPragmaABIDispatcherTrait};
     use pragma_lib::types::DataType;
     use openzeppelin::access::ownable::OwnableComponent;
@@ -461,7 +462,7 @@ pub mod optimistic_oracle_v1 {
                     identifier, self.get_identifier_whitelist().is_identifier_supported(identifier)
                 );
             let whitelisted_currency = WhitelistedCurrency {
-                is_whitelisted: self.get_collateral_whitelist().is_on_whitelist(currency),
+                is_whitelisted: self.get_collateral_whitelist().is_on_whitelist(currency, WhitelistType::Currency),
                 final_fee: self.get_store().compute_final_fee(currency)
             };
             self.cached_currencies.write(currency, whitelisted_currency);
@@ -558,7 +559,7 @@ pub mod optimistic_oracle_v1 {
             if (self.cached_currencies.read(currency).is_whitelisted) {
                 return true;
             }
-            let is_whitelisted = self.get_collateral_whitelist().is_on_whitelist(currency);
+            let is_whitelisted = self.get_collateral_whitelist().is_on_whitelist(currency, WhitelistType::Currency);
             let final_fee = self.get_store().compute_final_fee(currency);
             let cached_currency = WhitelistedCurrency { is_whitelisted, final_fee: final_fee };
             self.cached_currencies.write(currency, cached_currency);

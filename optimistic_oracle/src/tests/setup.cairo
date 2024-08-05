@@ -2,7 +2,7 @@ use snforge_std::{
     declare, ContractClassTrait, start_prank, stop_prank, CheatTarget, EventSpy, EventAssertions,
     spy_events, SpyOn
 };
-
+use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
 use starknet::{ContractAddress, contract_address_const, EthAddress};
 use optimistic_oracle::contracts::interfaces::{
     IFinderDispatcher, IFinderDispatcherTrait, IOptimisticOracleDispatcher,
@@ -136,7 +136,7 @@ pub fn oo_full_config() -> IOptimisticOracleDispatcher {
     identifier_whitelist.add_supported_identifier(OracleInterfaces::IDENTIFIER_WHITELIST);
     let ownable = IOwnableDispatcher { contract_address: address_whitelist.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    address_whitelist.add_to_whitelist(erc20.contract_address);
+    address_whitelist.add_to_whitelist(erc20.contract_address, WhitelistType::Currency);
     let ownable = IOwnableDispatcher { contract_address: finder.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     finder
