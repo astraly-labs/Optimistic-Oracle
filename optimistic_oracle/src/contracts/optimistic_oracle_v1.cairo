@@ -231,12 +231,16 @@ pub mod optimistic_oracle_v1 {
             );
             // Retreive the 1 dollar fee
 
-            let oracle_dispatcher = IPragmaABIDispatcher {
-                contract_address: ORACLE_ADDRESS.try_into().unwrap()
-            };
-            let response = oracle_dispatcher.get_data_median(DataType::SpotEntry('ETH/USD'));
-            assert(response.price > 0, Errors::FETCHING_PRICE_ERROR);
-            let eth_assertion_fee = dollar_to_wei(ASSERTION_FEE, response.price, response.decimals);
+            let mut eth_assertion_fee = 0;
+            let caller = starknet::get_caller_address();
+            if (!self.get_collateral_whitelist().is_on_whitelist(caller, WhitelistType::User)){
+                let oracle_dispatcher = IPragmaABIDispatcher {
+                    contract_address: ORACLE_ADDRESS.try_into().unwrap()
+                };
+                let response = oracle_dispatcher.get_data_median(DataType::SpotEntry('ETH/USD'));
+                assert(response.price > 0, Errors::FETCHING_PRICE_ERROR);
+                eth_assertion_fee = dollar_to_wei(ASSERTION_FEE, response.price, response.decimals);
+            }
             assert(asserter != contract_address_const::<0>(), Errors::ASSERTER_CANNOT_BE_ZERO);
             let assertion = self.assertions.read(assertion_id);
             assert(
