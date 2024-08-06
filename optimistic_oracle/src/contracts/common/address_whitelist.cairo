@@ -23,29 +23,25 @@ pub mod address_whitelist {
         Out,
         In,
     }
-    
+
     #[derive(PartialEq, Drop, Serde, starknet::Store, Copy)]
     pub enum WhitelistType {
         Currency,
         User,
     }
 
-        // Implement LegacyHash for (WhitelistType, ContractAddress)
-        impl WhitelistKeyHash of LegacyHash<(WhitelistType, ContractAddress)> {
-            fn hash(state: felt252, value: (WhitelistType, ContractAddress)) -> felt252 {
-                let (whitelist_type, address) = value;
-                let whitelist_type_felt252 = match whitelist_type {
-                    WhitelistType::Currency => {
-                        0
-                    }, 
-                    WhitelistType::User => {
-                        1
-                    }
-                };
-                let mut state = LegacyHash::<felt252>::hash(state, whitelist_type_felt252);
-                LegacyHash::<ContractAddress>::hash(state, address)
-            }
+    // Implement LegacyHash for (WhitelistType, ContractAddress)
+    impl WhitelistKeyHash of LegacyHash<(WhitelistType, ContractAddress)> {
+        fn hash(state: felt252, value: (WhitelistType, ContractAddress)) -> felt252 {
+            let (whitelist_type, address) = value;
+            let whitelist_type_felt252 = match whitelist_type {
+                WhitelistType::Currency => { 0 },
+                WhitelistType::User => { 1 }
+            };
+            let mut state = LegacyHash::<felt252>::hash(state, whitelist_type_felt252);
+            LegacyHash::<ContractAddress>::hash(state, address)
         }
+    }
 
 
     // Store manual implementation (basic implementation panics if no default enum is defined for a given address, cf: https://github.com/starkware-libs/cairo/blob/b741c26c553fd9fa3246cee91fd5c637f225cdb9/crates/cairo-lang-starknet/src/plugin/derive/store.rs#L263)
@@ -137,7 +133,9 @@ pub mod address_whitelist {
 
     #[abi(embed_v0)]
     impl IAddressWhitelistImpl of IAddressWhitelist<ContractState> {
-        fn add_to_whitelist(ref self: ContractState, new_element: ContractAddress, whitelist_type: WhitelistType) {
+        fn add_to_whitelist(
+            ref self: ContractState, new_element: ContractAddress, whitelist_type: WhitelistType
+        ) {
             self.ownable.assert_only_owner();
             self.reentrancy_guard.start();
             match self.get_status(new_element, whitelist_type) {
@@ -163,28 +161,41 @@ pub mod address_whitelist {
             self.reentrancy_guard.end();
         }
 
-        fn remove_from_whitelist(ref self: ContractState, element_to_remove: ContractAddress, whitelist_type: WhitelistType) {
+        fn remove_from_whitelist(
+            ref self: ContractState,
+            element_to_remove: ContractAddress,
+            whitelist_type: WhitelistType
+        ) {
             self.ownable.assert_only_owner();
             self.reentrancy_guard.start();
             if (self.whitelist.read((whitelist_type, element_to_remove)) != Status::Out) {
                 self.whitelist.write((whitelist_type, element_to_remove), Status::Out);
-                self.emit(RemovedFromWhitelist { removed_address: element_to_remove, whitelist_type });
+                self
+                    .emit(
+                        RemovedFromWhitelist { removed_address: element_to_remove, whitelist_type }
+                    );
             }
             self.reentrancy_guard.end();
         }
 
-        fn is_on_whitelist(self: @ContractState, element_to_check: ContractAddress, whitelist_type: WhitelistType) -> bool {
+        fn is_on_whitelist(
+            self: @ContractState, element_to_check: ContractAddress, whitelist_type: WhitelistType
+        ) -> bool {
             self.whitelist.read((whitelist_type, element_to_check)) == Status::In
         }
 
-        fn get_whitelist(self: @ContractState, whitelist_type: WhitelistType) -> Span<ContractAddress> {
+        fn get_whitelist(
+            self: @ContractState, whitelist_type: WhitelistType
+        ) -> Span<ContractAddress> {
             self.build_whitelist_indices_array(whitelist_type)
         }
     }
 
     #[generate_trait]
     impl InternalTraitImpl of InternalTrait {
-        fn get_status(self: @ContractState, address: ContractAddress, whitelist_type: WhitelistType) -> Option<Status> {
+        fn get_status(
+            self: @ContractState, address: ContractAddress, whitelist_type: WhitelistType
+        ) -> Option<Status> {
             match self.whitelist.read((whitelist_type, address)) {
                 Status::None => Option::Some(Status::None),
                 Status::In => Option::Some(Status::In),
@@ -193,8 +204,12 @@ pub mod address_whitelist {
             }
         }
 
-        fn find_last_whitelist_indice(self: @ContractState, whitelist_type: WhitelistType) -> ContractAddress {
-            let mut current_indice = self.whitelist_indices.read((whitelist_type, 0.try_into().unwrap()));
+        fn find_last_whitelist_indice(
+            self: @ContractState, whitelist_type: WhitelistType
+        ) -> ContractAddress {
+            let mut current_indice = self
+                .whitelist_indices
+                .read((whitelist_type, 0.try_into().unwrap()));
             loop {
                 let next_indice = self.whitelist_indices.read((whitelist_type, current_indice));
                 if next_indice == 0.try_into().unwrap() {
@@ -204,7 +219,9 @@ pub mod address_whitelist {
             }
         }
 
-        fn build_whitelist_indices_array(self: @ContractState, whitelist_type: WhitelistType) -> Span<ContractAddress> {
+        fn build_whitelist_indices_array(
+            self: @ContractState, whitelist_type: WhitelistType
+        ) -> Span<ContractAddress> {
             let mut index = 0.try_into().unwrap();
             let mut whitelist_indices = array![];
             loop {
@@ -221,7 +238,9 @@ pub mod address_whitelist {
             whitelist_indices.span()
         }
 
-        fn insert_to_whitelist(ref self: ContractState, new_element: ContractAddress, whitelist_type: WhitelistType) {
+        fn insert_to_whitelist(
+            ref self: ContractState, new_element: ContractAddress, whitelist_type: WhitelistType
+        ) {
             let last_index = self.find_last_whitelist_indice(whitelist_type);
             self.whitelist_indices.write((whitelist_type, last_index), new_element);
         }

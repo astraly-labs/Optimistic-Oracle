@@ -11,15 +11,15 @@ use optimistic_oracle::contracts::{
         IOptimisticOracleDispatcher, IOptimisticOracleDispatcherTrait, IStoreDispatcherTrait,
         IFinderDispatcherTrait, IIdentifierWhitelistDispatcherTrait,
         IAddressWhitelistDispatcherTrait, IMockOracleAncillaryConfigurationDispatcherTrait
-    }, 
-    optimistic_oracle_v1::optimistic_oracle_v1, 
+    },
+    optimistic_oracle_v1::optimistic_oracle_v1,
 };
 use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
 use snforge_std::cheatcodes::events::EventAssertions;
 use optimistic_oracle::contracts::utils::constants::OracleInterfaces;
 use openzeppelin::token::erc20::interface::{ERC20ABI, ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
-const DEFAULT_PRICE: u256= 400000000000000;
+const DEFAULT_PRICE: u256 = 400000000000000;
 #[test]
 fn test_oo_owner_verification() {
     let oo = oo_full_config();
@@ -123,7 +123,6 @@ fn test_oo_assert_truth_with_default() {
     assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - DEFAULT_PRICE.into());
     stop_warp(CheatTarget::One(oo.contract_address));
 
-
     // now we initiate a new assertion with a dispute process, but first, we need to provide the disputer with the necessary funds
     start_prank(CheatTarget::One(ownable_erc20.contract_address), OWNER());
     erc20.approve(oo.contract_address, minimum_bond + DEFAULT_PRICE.into());
@@ -182,7 +181,9 @@ fn test_oo_assert_truth_with_default() {
     assert_eq!(assertion.expiration_time, time + liveness);
     assert_eq!(erc20.balanceOf(DISPUTER()), 0);
     // So the owner balance should be the initial amount -  the amount sent to the oracle (because the owner sent minimum_bond to the disputer before the dispute process)
-    assert_eq!(erc20.balanceOf(OWNER()), INITIAL_SUPPLY - minimum_bond / 2 - 2*DEFAULT_PRICE.into() );
+    assert_eq!(
+        erc20.balanceOf(OWNER()), INITIAL_SUPPLY - minimum_bond / 2 - 2 * DEFAULT_PRICE.into()
+    );
     assert_eq!(erc20.balanceOf(store.contract_address), minimum_bond / 2);
     stop_warp(CheatTarget::One(oo.contract_address));
 }

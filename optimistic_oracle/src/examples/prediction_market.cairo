@@ -138,7 +138,8 @@ pub mod prediction_market {
     ) {
         self.finder.write(IFinderDispatcher { contract_address: finder });
         assert(
-            self.get_collateral_whitelist().is_on_whitelist(currency, WhitelistType::Currency), Errors::UNSUPPORTED_CURRENCY
+            self.get_collateral_whitelist().is_on_whitelist(currency, WhitelistType::Currency),
+            Errors::UNSUPPORTED_CURRENCY
         );
         self.currency.write(ERC20ABIDispatcher { contract_address: currency });
         self.oo.write(IOptimisticOracleDispatcher { contract_address: optimistic_oracle });

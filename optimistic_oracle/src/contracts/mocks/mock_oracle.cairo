@@ -1,13 +1,14 @@
 #[starknet::contract]
 pub mod mock_oracle {
     use pragma_lib::abi::{IPragmaABIDispatcher, IPragmaABIDispatcherTrait, IPragmaABI};
-    use pragma_lib::types::{DataType,  PragmaPricesResponse, AggregationMode, Currency,Pair,PossibleEntries,SimpleDataType,Checkpoint,SpotEntry, BaseEntry};
+    use pragma_lib::types::{
+        DataType, PragmaPricesResponse, AggregationMode, Currency, Pair, PossibleEntries,
+        SimpleDataType, Checkpoint, SpotEntry, BaseEntry
+    };
     use starknet::{ClassHash, ContractAddress};
-    pub const DEFAULT_PRICE : u128 = 250000000000;
+    pub const DEFAULT_PRICE: u128 = 250000000000;
     #[storage]
-    struct Storage {
-
-    }
+    struct Storage {}
     #[abi(embed_v0)]
     impl IPragmaABIImpl of IPragmaABI<ContractState> {
         fn get_decimals(self: @ContractState, data_type: DataType) -> u32 {
@@ -15,19 +16,37 @@ pub mod mock_oracle {
         }
 
         fn get_data_median(self: @ContractState, data_type: DataType) -> PragmaPricesResponse {
-            PragmaPricesResponse { price: DEFAULT_PRICE, decimals: 8, last_updated_timestamp: starknet::get_block_timestamp(), num_sources_aggregated: 1, expiration_timestamp: Option::None }
+            PragmaPricesResponse {
+                price: DEFAULT_PRICE,
+                decimals: 8,
+                last_updated_timestamp: starknet::get_block_timestamp(),
+                num_sources_aggregated: 1,
+                expiration_timestamp: Option::None
+            }
         }
 
         fn get_data_median_for_sources(
             self: @ContractState, data_type: DataType, sources: Span<felt252>
         ) -> PragmaPricesResponse {
-            PragmaPricesResponse { price: 0, decimals: 0, last_updated_timestamp: 0, num_sources_aggregated: 0, expiration_timestamp: Option::None }
+            PragmaPricesResponse {
+                price: 0,
+                decimals: 0,
+                last_updated_timestamp: 0,
+                num_sources_aggregated: 0,
+                expiration_timestamp: Option::None
+            }
         }
 
         fn get_data(
             self: @ContractState, data_type: DataType, aggregation_mode: AggregationMode
         ) -> PragmaPricesResponse {
-            PragmaPricesResponse { price: 0, decimals: 0, last_updated_timestamp: 0, num_sources_aggregated: 0, expiration_timestamp: Option::None }
+            PragmaPricesResponse {
+                price: 0,
+                decimals: 0,
+                last_updated_timestamp: 0,
+                num_sources_aggregated: 0,
+                expiration_timestamp: Option::None
+            }
         }
 
         fn get_data_median_multi(
@@ -38,17 +57,15 @@ pub mod mock_oracle {
 
         fn get_data_entry(
             self: @ContractState, data_type: DataType, source: felt252
-        ) -> PossibleEntries {            
-                    PossibleEntries::Spot(
-                        SpotEntry {
-                            base: BaseEntry {
-                                timestamp:0, source: source, publisher: 0
-                            },
-                            pair_id: 0,
-                            price: 0,
-                            volume: 0
-                        }
-                    )
+        ) -> PossibleEntries {
+            PossibleEntries::Spot(
+                SpotEntry {
+                    base: BaseEntry { timestamp: 0, source: source, publisher: 0 },
+                    pair_id: 0,
+                    price: 0,
+                    volume: 0
+                }
+            )
         }
 
 
@@ -58,7 +75,13 @@ pub mod mock_oracle {
             aggregation_mode: AggregationMode,
             sources: Span<felt252>
         ) -> PragmaPricesResponse {
-            PragmaPricesResponse { price: 0, decimals: 0, last_updated_timestamp: 0, num_sources_aggregated: 0, expiration_timestamp: Option::None }
+            PragmaPricesResponse {
+                price: 0,
+                decimals: 0,
+                last_updated_timestamp: 0,
+                num_sources_aggregated: 0,
+                expiration_timestamp: Option::None
+            }
         }
 
         fn get_data_entries(self: @ContractState, data_type: DataType) -> Span<PossibleEntries> {
@@ -77,7 +100,15 @@ pub mod mock_oracle {
             timestamp: u64,
             aggregation_mode: AggregationMode,
         ) -> (Checkpoint, u64) {
-            (Checkpoint { timestamp: 0, value: 0, aggregation_mode: AggregationMode::Median, num_sources_aggregated: 0 }, 0)
+            (
+                Checkpoint {
+                    timestamp: 0,
+                    value: 0,
+                    aggregation_mode: AggregationMode::Median,
+                    num_sources_aggregated: 0
+                },
+                0
+            )
         }
 
         fn get_data_with_USD_hop(
@@ -88,7 +119,13 @@ pub mod mock_oracle {
             typeof: SimpleDataType,
             expiration_timestamp: Option::<u64>
         ) -> PragmaPricesResponse {
-            PragmaPricesResponse { price: 0, decimals: 0, last_updated_timestamp: 0, num_sources_aggregated: 0, expiration_timestamp: Option::None }
+            PragmaPricesResponse {
+                price: 0,
+                decimals: 0,
+                last_updated_timestamp: 0,
+                num_sources_aggregated: 0,
+                expiration_timestamp: Option::None
+            }
         }
 
         fn get_publisher_registry_address(self: @ContractState) -> ContractAddress {
@@ -104,7 +141,12 @@ pub mod mock_oracle {
         fn get_latest_checkpoint(
             self: @ContractState, data_type: DataType, aggregation_mode: AggregationMode
         ) -> Checkpoint {
-            Checkpoint { timestamp: 0, value: 0, aggregation_mode: AggregationMode::Median , num_sources_aggregated: 0}
+            Checkpoint {
+                timestamp: 0,
+                value: 0,
+                aggregation_mode: AggregationMode::Median,
+                num_sources_aggregated: 0
+            }
         }
 
         fn get_checkpoint(
@@ -113,7 +155,12 @@ pub mod mock_oracle {
             checkpoint_index: u64,
             aggregation_mode: AggregationMode
         ) -> Checkpoint {
-            Checkpoint { timestamp: 0, value: 0, aggregation_mode: AggregationMode::Median , num_sources_aggregated: 0}
+            Checkpoint {
+                timestamp: 0,
+                value: 0,
+                aggregation_mode: AggregationMode::Median,
+                num_sources_aggregated: 0
+            }
         }
 
         fn get_sources_threshold(self: @ContractState,) -> u32 {
@@ -123,8 +170,6 @@ pub mod mock_oracle {
         fn get_admin_address(self: @ContractState,) -> ContractAddress {
             starknet::contract_address_const::<0>()
         }
-
-     
 
 
         fn publish_data(ref self: ContractState, new_entry: PossibleEntries) {}
@@ -157,7 +202,7 @@ pub mod mock_oracle {
 
         fn upgrade(ref self: ContractState, impl_hash: ClassHash) {}
 
-        fn get_implementation_hash(self: @ContractState)-> ClassHash {
+        fn get_implementation_hash(self: @ContractState) -> ClassHash {
             0.try_into().unwrap()
         }
     }

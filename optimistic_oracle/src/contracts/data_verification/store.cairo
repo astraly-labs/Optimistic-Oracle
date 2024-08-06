@@ -70,8 +70,7 @@ pub mod store {
             self.ownable.assert_only_owner();
             let eth_dispatcher = ERC20ABIDispatcher {
                 contract_address: ETH_ADDRESS // ETH Contract Address
-                    .try_into()
-                    .unwrap()
+                .try_into().unwrap()
             };
             let balance = eth_dispatcher.balanceOf(starknet::get_contract_address());
             eth_dispatcher.transfer(receiver, balance);

@@ -98,9 +98,9 @@ pub fn setup_optimistic_oracle(
     (IOptimisticOracleDispatcher { contract_address: optimistic_oracle_addr }, spy)
 }
 
-fn setup_mock_oracle(){
+fn setup_mock_oracle() {
     let mock_oracle_class = declare("mock_oracle").unwrap();
-    mock_oracle_class.deploy_at(@array![],ORACLE_ADDRESS.try_into().unwrap()).unwrap();
+    mock_oracle_class.deploy_at(@array![], ORACLE_ADDRESS.try_into().unwrap()).unwrap();
 }
 
 

@@ -44,8 +44,10 @@ pub mod optimistic_oracle_v1 {
     pub const NUMERICAL_TRUE: u256 = 1000000000000000000;
     pub const BURNED_BOND_PERCENTAGE: u256 = 500000000000000000;
     pub const ASSERTION_FEE: u128 = 100000000;
-    pub const ORACLE_ADDRESS: felt252 = 0x36031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a; //TODO: WHEN REDEPLOYING CHANGE TO MAINNET ADDRESS
-    pub const ETH_ADDRESS: felt252 = 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7;
+    pub const ORACLE_ADDRESS: felt252 =
+        0x36031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a; //TODO: WHEN REDEPLOYING CHANGE TO MAINNET ADDRESS
+    pub const ETH_ADDRESS: felt252 =
+        0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7;
     #[storage]
     struct Storage {
         finder: IFinderDispatcher,
@@ -233,7 +235,7 @@ pub mod optimistic_oracle_v1 {
 
             let mut eth_assertion_fee = 0;
             let caller = starknet::get_caller_address();
-            if (!self.get_collateral_whitelist().is_on_whitelist(caller, WhitelistType::User)){
+            if (!self.get_collateral_whitelist().is_on_whitelist(caller, WhitelistType::User)) {
                 let oracle_dispatcher = IPragmaABIDispatcher {
                     contract_address: ORACLE_ADDRESS.try_into().unwrap()
                 };
@@ -260,7 +262,8 @@ pub mod optimistic_oracle_v1 {
             let contract_address = starknet::get_contract_address();
 
             assert(
-                currency.allowance(caller_address, contract_address) >= bond + eth_assertion_fee.into(),
+                currency.allowance(caller_address, contract_address) >= bond
+                    + eth_assertion_fee.into(),
                 Errors::INSUFFICIENT_ALLOWANCE
             );
             let assertion_policy = self.get_assertion_policy(assertion_id);
@@ -291,7 +294,8 @@ pub mod optimistic_oracle_v1 {
                         expiration_time: time + liveness
                     }
                 );
-            currency.transfer_from(caller_address, contract_address, bond + eth_assertion_fee.into());
+            currency
+                .transfer_from(caller_address, contract_address, bond + eth_assertion_fee.into());
             self
                 .emit(
                     AssertionMade {
@@ -466,7 +470,9 @@ pub mod optimistic_oracle_v1 {
                     identifier, self.get_identifier_whitelist().is_identifier_supported(identifier)
                 );
             let whitelisted_currency = WhitelistedCurrency {
-                is_whitelisted: self.get_collateral_whitelist().is_on_whitelist(currency, WhitelistType::Currency),
+                is_whitelisted: self
+                    .get_collateral_whitelist()
+                    .is_on_whitelist(currency, WhitelistType::Currency),
                 final_fee: self.get_store().compute_final_fee(currency)
             };
             self.cached_currencies.write(currency, whitelisted_currency);
@@ -563,7 +569,9 @@ pub mod optimistic_oracle_v1 {
             if (self.cached_currencies.read(currency).is_whitelisted) {
                 return true;
             }
-            let is_whitelisted = self.get_collateral_whitelist().is_on_whitelist(currency, WhitelistType::Currency);
+            let is_whitelisted = self
+                .get_collateral_whitelist()
+                .is_on_whitelist(currency, WhitelistType::Currency);
             let final_fee = self.get_store().compute_final_fee(currency);
             let cached_currency = WhitelistedCurrency { is_whitelisted, final_fee: final_fee };
             self.cached_currencies.write(currency, cached_currency);
@@ -683,7 +691,6 @@ pub mod optimistic_oracle_v1 {
     fn dollar_to_wei(usd: u128, price: u128, decimals: u32) -> u128 {
         (usd * pow(10, decimals.into()) * 1000000000000000000) / (price * 100000000)
     }
-
 
 
     fn get_id(

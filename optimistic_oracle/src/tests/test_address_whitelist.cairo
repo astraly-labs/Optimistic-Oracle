@@ -36,11 +36,16 @@ fn test_address_whitelist_add_to_whitelist() {
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
     let expected_event = address_whitelist::Event::AddedToWhitelist(
-        address_whitelist::AddedToWhitelist { added_address: address_to_add, whitelist_type: WhitelistType::Currency }
+        address_whitelist::AddedToWhitelist {
+            added_address: address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
     let mut expected_result = array![address_to_add];
-    assert(address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(), 'AW: Insertion failed');
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: Insertion failed'
+    );
     assert_eq!(address_whitelist.is_on_whitelist(address_to_add, WhitelistType::Currency), true);
 
     // 2nd insertion
@@ -48,11 +53,18 @@ fn test_address_whitelist_add_to_whitelist() {
     address_whitelist.add_to_whitelist(new_address_to_add, WhitelistType::Currency);
     expected_result.append(new_address_to_add);
     let expected_event = address_whitelist::Event::AddedToWhitelist(
-        address_whitelist::AddedToWhitelist { added_address: new_address_to_add, whitelist_type: WhitelistType::Currency }
+        address_whitelist::AddedToWhitelist {
+            added_address: new_address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
-    assert(address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(), 'AW: 2 Insertion failed');
-    assert_eq!(address_whitelist.is_on_whitelist(new_address_to_add, WhitelistType::Currency), true);
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: 2 Insertion failed'
+    );
+    assert_eq!(
+        address_whitelist.is_on_whitelist(new_address_to_add, WhitelistType::Currency), true
+    );
     // Duplicate insertion
     address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
     assert(
@@ -72,24 +84,37 @@ fn test_address_whitelist_remove_from_whitelist() {
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
     address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
     let expected_event = address_whitelist::Event::AddedToWhitelist(
-        address_whitelist::AddedToWhitelist { added_address: address_to_add, whitelist_type: WhitelistType::Currency }
+        address_whitelist::AddedToWhitelist {
+            added_address: address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
     let mut expected_result = array![address_to_add];
-    assert(address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(), 'AW: Insertion failed');
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: Insertion failed'
+    );
 
     // Removal 
     address_whitelist.remove_from_whitelist(address_to_add, WhitelistType::Currency);
-    assert(address_whitelist.get_whitelist(WhitelistType::Currency) == array![].span(), 'AW: Removal failed');
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == array![].span(),
+        'AW: Removal failed'
+    );
     assert_eq!(address_whitelist.is_on_whitelist(address_to_add, WhitelistType::Currency), false);
     let expected_event = address_whitelist::Event::RemovedFromWhitelist(
-        address_whitelist::RemovedFromWhitelist { removed_address: address_to_add, whitelist_type: WhitelistType::Currency }
+        address_whitelist::RemovedFromWhitelist {
+            removed_address: address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
     // Reintroduction
 
     address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
-    assert(address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(), 'AW: Reinsertion failed');
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: Reinsertion failed'
+    );
     assert_eq!(address_whitelist.is_on_whitelist(address_to_add, WhitelistType::Currency), true);
 }
 

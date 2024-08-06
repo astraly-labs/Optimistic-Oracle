@@ -114,13 +114,19 @@ pub trait IIdentifierWhitelist<TContractState> {
 
 #[starknet::interface]
 pub trait IAddressWhitelist<TContractState> {
-    fn add_to_whitelist(ref self: TContractState, new_element: ContractAddress,whitelist_type: WhitelistType);
+    fn add_to_whitelist(
+        ref self: TContractState, new_element: ContractAddress, whitelist_type: WhitelistType
+    );
 
-    fn remove_from_whitelist(ref self: TContractState, element_to_remove: ContractAddress,whitelist_type: WhitelistType);
+    fn remove_from_whitelist(
+        ref self: TContractState, element_to_remove: ContractAddress, whitelist_type: WhitelistType
+    );
 
-    fn is_on_whitelist(self: @TContractState, element_to_check: ContractAddress,whitelist_type: WhitelistType) -> bool;
+    fn is_on_whitelist(
+        self: @TContractState, element_to_check: ContractAddress, whitelist_type: WhitelistType
+    ) -> bool;
 
-    fn get_whitelist(self: @TContractState,whitelist_type: WhitelistType) -> Span<ContractAddress>;
+    fn get_whitelist(self: @TContractState, whitelist_type: WhitelistType) -> Span<ContractAddress>;
 }
 
 #[starknet::interface]
