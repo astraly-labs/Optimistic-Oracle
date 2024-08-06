@@ -5,6 +5,7 @@ use optimistic_oracle::contracts::mocks::oracle_ancillary::mock_oracle_ancillary
     QueryPoint, QueryIndex
 };
 use optimistic_oracle::examples::prediction_market::prediction_market::Market;
+use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
 
 #[derive(starknet::Store, Drop, Serde, Copy)]
 pub struct EscalationManagerSettings {
@@ -113,13 +114,19 @@ pub trait IIdentifierWhitelist<TContractState> {
 
 #[starknet::interface]
 pub trait IAddressWhitelist<TContractState> {
-    fn add_to_whitelist(ref self: TContractState, new_element: ContractAddress);
+    fn add_to_whitelist(
+        ref self: TContractState, new_element: ContractAddress, whitelist_type: WhitelistType
+    );
 
-    fn remove_from_whitelist(ref self: TContractState, element_to_remove: ContractAddress);
+    fn remove_from_whitelist(
+        ref self: TContractState, element_to_remove: ContractAddress, whitelist_type: WhitelistType
+    );
 
-    fn is_on_whitelist(self: @TContractState, element_to_check: ContractAddress) -> bool;
+    fn is_on_whitelist(
+        self: @TContractState, element_to_check: ContractAddress, whitelist_type: WhitelistType
+    ) -> bool;
 
-    fn get_whitelist(self: @TContractState) -> Span<ContractAddress>;
+    fn get_whitelist(self: @TContractState, whitelist_type: WhitelistType) -> Span<ContractAddress>;
 }
 
 #[starknet::interface]
@@ -195,7 +202,7 @@ pub trait IMockOracleAncillaryConfiguration<TContractState> {
 
 
 #[starknet::interface]
-pub trait IOptimisticOracleV3CallbackRecipient<TContractState> {
+pub trait IOptimisticOracleCallbackRecipient<TContractState> {
     fn assertion_resolved_callback(
         ref self: TContractState, assertion_id: felt252, asserted_truthfully: bool
     );
