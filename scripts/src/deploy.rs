@@ -5,7 +5,7 @@ use super::{
     utils::{deploy_contract, get_transaction_receipt},
 };
 use crate::bind::{
-    address_whitelist::address_whitelist, finder::finder,
+    address_whitelist::{address_whitelist,WhitelistType}, finder::finder,
     identifier_whitelist::identifier_whitelist, store::store,
 };
 use anyhow::Result;
@@ -175,7 +175,7 @@ pub async fn configure_contracts(
 
     let address_whitelist = address_whitelist::new(contracts.address_whitelist, owner);
     let address_whitelist_res = address_whitelist
-        .add_to_whitelist(&ContractAddress(default_configuration.erc20_token))
+        .add_to_whitelist(&ContractAddress(default_configuration.erc20_token),&WhitelistType::Currency)
         .send()
         .await?;
 
@@ -272,3 +272,4 @@ pub async fn configure_contracts(
 
     Ok(())
 }
+
