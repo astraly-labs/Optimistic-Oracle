@@ -316,6 +316,13 @@ pub mod optimistic_oracle_v1 {
                 assertion.expiration_time > starknet::get_block_timestamp(),
                 Errors::ASSERTION_IS_EXPIRED
             );
+            let caller_address = starknet::get_caller_address();
+            let contract_address = starknet::get_contract_address();
+
+            assert(
+                assertion.currency.allowance(caller_address, contract_address) >= assertion.bond,
+                Errors::INSUFFICIENT_ALLOWANCE
+            );
             assert(self.is_dispute_allowed(assertion_id), Errors::DISPUTE_NOT_ALLOWED);
             assertion.disputer = disputer;
             self.assertions.write(assertion_id, assertion);
