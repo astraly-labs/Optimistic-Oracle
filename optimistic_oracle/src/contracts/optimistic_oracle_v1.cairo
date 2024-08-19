@@ -137,6 +137,7 @@ pub mod optimistic_oracle_v1 {
         pub assertion_id: felt252,
         pub caller: ContractAddress,
         pub disputer: ContractAddress,
+        pub request_id: felt252
     }
 
 
@@ -331,7 +332,7 @@ pub mod optimistic_oracle_v1 {
                 .transfer_from(
                     starknet::get_caller_address(), starknet::get_contract_address(), assertion.bond
                 );
-            self
+            let request_id = self
                 .oracle_request_price(
                     assertion_id, assertion.identifier, assertion.assertion_time.into()
                 );
@@ -343,7 +344,7 @@ pub mod optimistic_oracle_v1 {
             self
                 .emit(
                     AssertionDisputed {
-                        assertion_id, caller: starknet::get_caller_address(), disputer
+                        assertion_id, caller: starknet::get_caller_address(), disputer, request_id
                     }
                 );
             self.reentrancy_guard.end();
@@ -608,10 +609,10 @@ pub mod optimistic_oracle_v1 {
 
         fn oracle_request_price(
             self: @ContractState, assertion_id: felt252, identifier: felt252, time: u256
-        ) {
+        ) -> felt252 {
             self
                 .get_oracle(assertion_id)
-                .request_price(identifier, time, self.stamp_assertion(assertion_id));
+                .request_price(identifier, time, self.stamp_assertion(assertion_id))
         }
 
         fn get_oracle(self: @ContractState, assertion_id: felt252) -> IOracleAncillaryDispatcher {

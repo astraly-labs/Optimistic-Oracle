@@ -50,7 +50,7 @@ fn test_request_price() {
     let time: u256 = 1000;
     let ancillary_data: ByteArray = Default::default();
 
-    oracle.request_price(identifier, time, ancillary_data.clone());
+    let _ = oracle.request_price(identifier, time, ancillary_data.clone());
 
     let expected_event = mock_oracle_ancillary::Event::PriceRequestAdded(
         mock_oracle_ancillary::PriceRequestAdded {

@@ -115,7 +115,7 @@ pub mod mock_oracle_ancillary {
     impl IMockOracleAncillaryImpl of IOracleAncillary<ContractState> {
         fn request_price(
             ref self: ContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
-        ) {
+        ) -> felt252 {
             assert(
                 self.get_identifier_whitelist().is_identifier_supported(identifier),
                 Errors::IDENTIFIER_NOT_SUPPORTED
@@ -149,6 +149,7 @@ pub mod mock_oracle_ancillary {
                         }
                     );
             }
+            request_id
         }
 
         fn has_price(
