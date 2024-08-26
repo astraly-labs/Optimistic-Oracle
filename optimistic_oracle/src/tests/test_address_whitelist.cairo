@@ -7,6 +7,7 @@ use optimistic_oracle::contracts::{
     interfaces::{IAddressWhitelistDispatcher, IAddressWhitelistDispatcherTrait}
 };
 use snforge_std::cheatcodes::events::EventAssertions;
+use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
 
 
 #[test]
@@ -33,32 +34,44 @@ fn test_address_whitelist_add_to_whitelist() {
     let (address_whitelist, mut spy) = setup_address_whitelist();
     let ownable = IOwnableDispatcher { contract_address: address_whitelist.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    address_whitelist.add_to_whitelist(address_to_add);
+    address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
     let expected_event = address_whitelist::Event::AddedToWhitelist(
-        address_whitelist::AddedToWhitelist { added_address: address_to_add }
+        address_whitelist::AddedToWhitelist {
+            added_address: address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
     let mut expected_result = array![address_to_add];
-    assert(address_whitelist.get_whitelist() == expected_result.span(), 'AW: Insertion failed');
-    assert_eq!(address_whitelist.is_on_whitelist(address_to_add), true);
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: Insertion failed'
+    );
+    assert_eq!(address_whitelist.is_on_whitelist(address_to_add, WhitelistType::Currency), true);
 
     // 2nd insertion
     let new_address_to_add = contract_address_const::<0x1231413>();
-    address_whitelist.add_to_whitelist(new_address_to_add);
+    address_whitelist.add_to_whitelist(new_address_to_add, WhitelistType::Currency);
     expected_result.append(new_address_to_add);
     let expected_event = address_whitelist::Event::AddedToWhitelist(
-        address_whitelist::AddedToWhitelist { added_address: new_address_to_add }
+        address_whitelist::AddedToWhitelist {
+            added_address: new_address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
-    assert(address_whitelist.get_whitelist() == expected_result.span(), 'AW: 2 Insertion failed');
-    assert_eq!(address_whitelist.is_on_whitelist(new_address_to_add), true);
-    // Duplicate insertion
-    address_whitelist.add_to_whitelist(address_to_add);
     assert(
-        address_whitelist.get_whitelist() == expected_result.span(),
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: 2 Insertion failed'
+    );
+    assert_eq!(
+        address_whitelist.is_on_whitelist(new_address_to_add, WhitelistType::Currency), true
+    );
+    // Duplicate insertion
+    address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
         'AW: Duplicate insertion failed'
     );
-    assert_eq!(address_whitelist.is_on_whitelist(address_to_add), true);
+    assert_eq!(address_whitelist.is_on_whitelist(address_to_add, WhitelistType::Currency), true);
 }
 
 
@@ -69,27 +82,40 @@ fn test_address_whitelist_remove_from_whitelist() {
     let (address_whitelist, mut spy) = setup_address_whitelist();
     let ownable = IOwnableDispatcher { contract_address: address_whitelist.contract_address };
     start_prank(CheatTarget::One(ownable.contract_address), OWNER());
-    address_whitelist.add_to_whitelist(address_to_add);
+    address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
     let expected_event = address_whitelist::Event::AddedToWhitelist(
-        address_whitelist::AddedToWhitelist { added_address: address_to_add }
+        address_whitelist::AddedToWhitelist {
+            added_address: address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
     let mut expected_result = array![address_to_add];
-    assert(address_whitelist.get_whitelist() == expected_result.span(), 'AW: Insertion failed');
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: Insertion failed'
+    );
 
     // Removal 
-    address_whitelist.remove_from_whitelist(address_to_add);
-    assert(address_whitelist.get_whitelist() == array![].span(), 'AW: Removal failed');
-    assert_eq!(address_whitelist.is_on_whitelist(address_to_add), false);
+    address_whitelist.remove_from_whitelist(address_to_add, WhitelistType::Currency);
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == array![].span(),
+        'AW: Removal failed'
+    );
+    assert_eq!(address_whitelist.is_on_whitelist(address_to_add, WhitelistType::Currency), false);
     let expected_event = address_whitelist::Event::RemovedFromWhitelist(
-        address_whitelist::RemovedFromWhitelist { removed_address: address_to_add }
+        address_whitelist::RemovedFromWhitelist {
+            removed_address: address_to_add, whitelist_type: WhitelistType::Currency
+        }
     );
     spy.assert_emitted(@array![(address_whitelist.contract_address, expected_event)]);
     // Reintroduction
 
-    address_whitelist.add_to_whitelist(address_to_add);
-    assert(address_whitelist.get_whitelist() == expected_result.span(), 'AW: Reinsertion failed');
-    assert_eq!(address_whitelist.is_on_whitelist(address_to_add), true);
+    address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
+    assert(
+        address_whitelist.get_whitelist(WhitelistType::Currency) == expected_result.span(),
+        'AW: Reinsertion failed'
+    );
+    assert_eq!(address_whitelist.is_on_whitelist(address_to_add, WhitelistType::Currency), true);
 }
 
 #[test]
@@ -97,6 +123,6 @@ fn test_address_whitelist_remove_from_whitelist() {
 fn test_address_whitelist_add_to_whitelist_fails_if_caller_not_owner() {
     let address_to_add = contract_address_const::<0x234e2>();
     let (address_whitelist, _) = setup_address_whitelist();
-    address_whitelist.add_to_whitelist(address_to_add);
+    address_whitelist.add_to_whitelist(address_to_add, WhitelistType::Currency);
 }
 

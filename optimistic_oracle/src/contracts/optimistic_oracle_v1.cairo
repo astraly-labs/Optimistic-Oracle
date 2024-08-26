@@ -7,9 +7,12 @@ pub mod optimistic_oracle_v1 {
         IAddressWhitelistDispatcher, IAddressWhitelistDispatcherTrait, IStoreDispatcher,
         IStoreDispatcherTrait, Assertion, EscalationManagerSettings, AssertionPolicy,
         IEscalationManagerDispatcher, IEscalationManagerDispatcherTrait, IOracleAncillaryDispatcher,
-        IOracleAncillaryDispatcherTrait, IOptimisticOracleV3CallbackRecipientDispatcher,
-        IOptimisticOracleV3CallbackRecipientDispatcherTrait, IOptimisticOracleV3CallbackRecipient
+        IOracleAncillaryDispatcherTrait, IOptimisticOracleCallbackRecipientDispatcher,
+        IOptimisticOracleCallbackRecipientDispatcherTrait, IOptimisticOracleCallbackRecipient
     };
+    use optimistic_oracle::contracts::common::address_whitelist::address_whitelist::WhitelistType;
+    use pragma_lib::abi::{IPragmaABIDispatcher, IPragmaABIDispatcherTrait};
+    use pragma_lib::types::DataType;
     use openzeppelin::access::ownable::OwnableComponent;
     use alexandria_data_structures::array_ext::ArrayTraitExt;
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
@@ -28,21 +31,23 @@ pub mod optimistic_oracle_v1 {
     use starknet::{ContractAddress, ClassHash, contract_address_const};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-
+    component!(
+        path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent
+    );
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
-    component!(
-        path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent
-    );
-
     // CONSTANTS DEFINITION
     pub const DEFAULT_IDENTIFIER: felt252 = 'ASSERT_TRUTH';
     pub const NUMERICAL_TRUE: u256 = 1000000000000000000;
     pub const BURNED_BOND_PERCENTAGE: u256 = 500000000000000000;
-
+    pub const ASSERTION_FEE: u128 = 100000000;
+    pub const ORACLE_ADDRESS: felt252 =
+        0x36031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a; //TODO: WHEN REDEPLOYING CHANGE TO MAINNET ADDRESS
+    pub const ETH_ADDRESS: felt252 =
+        0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7;
     #[storage]
     struct Storage {
         finder: IFinderDispatcher,
@@ -83,6 +88,7 @@ pub mod optimistic_oracle_v1 {
         pub const ASSERTION_NOT_SETTLED: felt252 = 'Assertion not settled';
         pub const CURRENCY_NOT_DEFINED: felt252 = 'Currency not defined';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'Insufficient allowance';
+        pub const FETCHING_PRICE_ERROR: felt252 = 'Error fetching price';
     }
 
     #[event]
@@ -226,6 +232,18 @@ pub mod optimistic_oracle_v1 {
                 escalation_manager,
                 identifier
             );
+            // Retreive the 1 dollar fee
+
+            let mut eth_assertion_fee = 0;
+            let caller = starknet::get_caller_address();
+            if (!self.get_collateral_whitelist().is_on_whitelist(caller, WhitelistType::User)) {
+                let oracle_dispatcher = IPragmaABIDispatcher {
+                    contract_address: ORACLE_ADDRESS.try_into().unwrap()
+                };
+                let response = oracle_dispatcher.get_data_median(DataType::SpotEntry('ETH/USD'));
+                assert(response.price > 0, Errors::FETCHING_PRICE_ERROR);
+                eth_assertion_fee = dollar_to_wei(ASSERTION_FEE, response.price, response.decimals);
+            }
             assert(asserter != contract_address_const::<0>(), Errors::ASSERTER_CANNOT_BE_ZERO);
             let assertion = self.assertions.read(assertion_id);
             assert(
@@ -245,7 +263,8 @@ pub mod optimistic_oracle_v1 {
             let contract_address = starknet::get_contract_address();
 
             assert(
-                currency.allowance(caller_address, contract_address) >= bond,
+                currency.allowance(caller_address, contract_address) >= bond
+                    + eth_assertion_fee.into(),
                 Errors::INSUFFICIENT_ALLOWANCE
             );
             let assertion_policy = self.get_assertion_policy(assertion_id);
@@ -276,7 +295,8 @@ pub mod optimistic_oracle_v1 {
                         expiration_time: time + liveness
                     }
                 );
-            currency.transfer_from(caller_address, contract_address, bond);
+            currency
+                .transfer_from(caller_address, contract_address, bond + eth_assertion_fee.into());
             self
                 .emit(
                     AssertionMade {
@@ -458,7 +478,9 @@ pub mod optimistic_oracle_v1 {
                     identifier, self.get_identifier_whitelist().is_identifier_supported(identifier)
                 );
             let whitelisted_currency = WhitelistedCurrency {
-                is_whitelisted: self.get_collateral_whitelist().is_on_whitelist(currency),
+                is_whitelisted: self
+                    .get_collateral_whitelist()
+                    .is_on_whitelist(currency, WhitelistType::Currency),
                 final_fee: self.get_store().compute_final_fee(currency)
             };
             self.cached_currencies.write(currency, whitelisted_currency);
@@ -555,7 +577,9 @@ pub mod optimistic_oracle_v1 {
             if (self.cached_currencies.read(currency).is_whitelisted) {
                 return true;
             }
-            let is_whitelisted = self.get_collateral_whitelist().is_on_whitelist(currency);
+            let is_whitelisted = self
+                .get_collateral_whitelist()
+                .is_on_whitelist(currency, WhitelistType::Currency);
             let final_fee = self.get_store().compute_final_fee(currency);
             let cached_currency = WhitelistedCurrency { is_whitelisted, final_fee: final_fee };
             self.cached_currencies.write(currency, cached_currency);
@@ -649,11 +673,11 @@ pub mod optimistic_oracle_v1 {
             let cr = self.assertions.read(assertion_id).callback_recipient;
             let em = self.get_escalation_manager(assertion_id);
             if (cr != contract_address_const::<0>()) {
-                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: cr }
+                IOptimisticOracleCallbackRecipientDispatcher { contract_address: cr }
                     .assertion_resolved_callback(assertion_id, asserted_truthfully);
             }
             if (em != contract_address_const::<0>()) {
-                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: em }
+                IOptimisticOracleCallbackRecipientDispatcher { contract_address: em }
                     .assertion_resolved_callback(assertion_id, asserted_truthfully);
             }
         }
@@ -662,14 +686,18 @@ pub mod optimistic_oracle_v1 {
             let cr = self.assertions.read(assertion_id).callback_recipient;
             let em = self.get_escalation_manager(assertion_id);
             if (cr != contract_address_const::<0>()) {
-                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: cr }
+                IOptimisticOracleCallbackRecipientDispatcher { contract_address: cr }
                     .assertion_disputed_callback(assertion_id);
             }
             if (em != contract_address_const::<0>()) {
-                IOptimisticOracleV3CallbackRecipientDispatcher { contract_address: em }
+                IOptimisticOracleCallbackRecipientDispatcher { contract_address: em }
                     .assertion_disputed_callback(assertion_id);
             }
         }
+    }
+
+    fn dollar_to_wei(usd: u128, price: u128, decimals: u32) -> u128 {
+        (usd * pow(10, decimals.into()) * 1000000000000000000) / (price * 100000000)
     }
 
 
