@@ -4,7 +4,7 @@ pub mod store {
     use optimistic_oracle::contracts::interfaces::{IStoreDispatcher, IStore, IStoreDispatcherTrait};
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
-
+    use optimistic_oracle::contracts::optimistic_oracle_v1::optimistic_oracle_v1::ETH_ADDRESS;
     use openzeppelin::access::ownable::OwnableComponent;
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
@@ -69,12 +69,12 @@ pub mod store {
         fn withdraw_funds(ref self: ContractState, receiver: ContractAddress) {
             self.ownable.assert_only_owner();
             let eth_dispatcher = ERC20ABIDispatcher {
-                contract_address: 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 // ETH Contract Address
-                    .try_into()
-                    .unwrap()
+                contract_address: ETH_ADDRESS // ETH Contract Address
+                .try_into().unwrap()
             };
             let balance = eth_dispatcher.balanceOf(starknet::get_contract_address());
             eth_dispatcher.transfer(receiver, balance);
         }
     }
 }
+

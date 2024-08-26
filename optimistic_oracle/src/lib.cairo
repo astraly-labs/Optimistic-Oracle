@@ -23,6 +23,7 @@ pub mod contracts {
         pub mod oracle_ancillary;
         pub mod full_erc20;
         pub mod mock_erc20;
+        pub mod mock_oracle;
     }
 }
 pub mod examples {

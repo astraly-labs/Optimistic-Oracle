@@ -9,6 +9,7 @@ edition = "2023_11"
 starknet = "2.6.3"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git"}
 alexandria_bytes = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+pragma_lib = { git = "https://github.com/astraly-labs/pragma-lib" }
 
 
 [dev-dependencies]
