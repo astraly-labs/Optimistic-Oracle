@@ -154,7 +154,7 @@ pub trait IEscalationManager<TContractState> {
 
     fn request_price(
         ref self: TContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
-    );
+    ) -> felt252;
 }
 
 
@@ -162,7 +162,7 @@ pub trait IEscalationManager<TContractState> {
 pub trait IOracleAncillary<TContractState> {
     fn request_price(
         ref self: TContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
-    );
+    ) -> felt252;
 
     fn has_price(
         self: @TContractState, identifier: felt252, time: u256, ancillary_data: ByteArray

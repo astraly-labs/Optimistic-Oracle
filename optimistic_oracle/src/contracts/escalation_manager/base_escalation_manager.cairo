@@ -56,8 +56,9 @@ pub mod base_escalation_manager {
 
         fn request_price(
             ref self: ContractState, identifier: felt252, time: u256, ancillary_data: ByteArray
-        ) {
+        ) -> felt252 {
             self.emit(PriceRequestAdded { identifier, time, ancillary_data });
+            0
         }
     }
 
