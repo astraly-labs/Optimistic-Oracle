@@ -1,11 +1,11 @@
 {
   "codes": {
-    "finder": "0x4a5154152cbdf4b3eed9441f2e7da7a298919b3f065374c42272653fc699b18",
-    "address_whitelist": "0x63e5f9fe93dfe932822012e22ac2dc3c9686f4c8d25bcc69e2efb05a3c2784",
-    "identifier_whitelist": "0x7710e8c699a532e469b3ede49caabf7884cc3c5541fb1cf52b862cbb6d44a29",
-    "store": "0x211f85c27f9e6491415a916fe09140eb18e632d8086e99642cfabdba2553808",
-    "oracle_ancillary": "0x4a5764a049b8a5438960b15aa592ef77da18e6fdddf455695c6ae4dee3db464",
-    "optimistic_oracle_v1": "0x67f9d9874d34e45a0c7dfe3e29312b6fcd2fb5f7feac351ce06a99c7b8cea35"
+    "finder": "0x11b79f4ae9d4a084ce52b362c844bace97412fd025551b9e54b4821a6b54572",
+    "address_whitelist": "0x3a36e6f13318ac762e0b885b4b0cb38c755192c7d5c99af33a1db44fa596a38",
+    "identifier_whitelist": "0x12c4334e281c0e5cdd395c33a33b0b27828f0758d55137a0406f6bb17309d27",
+    "store": "0x3f2f1ac4ac2c42beace835d818490a99b6a0fa2638b974dab2a1a44364c9387",
+    "oracle_ancillary": "0x414424d98c4864fc35f3a11f691fe27add52c52ec900948b664a22096248711",
+    "optimistic_oracle_v1": "0x11a402245c2c06ebe43ac9c0cbde9dd6a9ddb688a289d821adb9d4ad2829b19"
   },
   "network": "starknet_sepolia"
 }

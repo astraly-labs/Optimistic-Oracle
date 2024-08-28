@@ -5,8 +5,10 @@ use super::{
     utils::{deploy_contract, get_transaction_receipt},
 };
 use crate::bind::{
-    address_whitelist::{address_whitelist,WhitelistType}, finder::finder,
-    identifier_whitelist::identifier_whitelist, store::store,
+    address_whitelist::{address_whitelist, WhitelistType},
+    finder::finder,
+    identifier_whitelist::identifier_whitelist,
+    store::store,
 };
 use anyhow::Result;
 use cainome::cairo_serde::ContractAddress;
@@ -77,6 +79,8 @@ pub async fn deploy_core(
         },
     )
     .await?;
+
+    tokio::time::sleep(tokio::time::Duration::from_millis(30000)).await;
 
     info!(" Optimistic oracle deployed: {:x?}", optimistic_oracle_v1);
 
@@ -175,7 +179,10 @@ pub async fn configure_contracts(
 
     let address_whitelist = address_whitelist::new(contracts.address_whitelist, owner);
     let address_whitelist_res = address_whitelist
-        .add_to_whitelist(&ContractAddress(default_configuration.erc20_token),&WhitelistType::Currency)
+        .add_to_whitelist(
+            &ContractAddress(default_configuration.erc20_token),
+            &WhitelistType::Currency,
+        )
         .send()
         .await?;
 
@@ -183,6 +190,7 @@ pub async fn configure_contracts(
         "Add collateral address whitelist for address whitelist contract with tx hash: {:x?}",
         address_whitelist_res.transaction_hash
     );
+    tokio::time::sleep(tokio::time::Duration::from_millis(10000)).await;
 
     assert!(
         get_transaction_receipt(owner.provider(), address_whitelist_res.transaction_hash)
@@ -272,4 +280,3 @@ pub async fn configure_contracts(
 
     Ok(())
 }
-

@@ -57,7 +57,7 @@ async fn main() -> eyre::Result<()> {
     let declarations = scripts::utils::declare_all(&account).await?;
 
     let oo_config = scripts::types::OOConfig {
-        liveness: 120,
+        liveness: 7200,
         erc20_token: scripts::types::ETH_ADDRESS,
         final_fee: cainome::cairo_serde::U256 {
             low: 100000000,
