@@ -1,11 +1,11 @@
 {
   "codes": {
-    "finder": "0x11b79f4ae9d4a084ce52b362c844bace97412fd025551b9e54b4821a6b54572",
-    "address_whitelist": "0x3a36e6f13318ac762e0b885b4b0cb38c755192c7d5c99af33a1db44fa596a38",
-    "identifier_whitelist": "0x12c4334e281c0e5cdd395c33a33b0b27828f0758d55137a0406f6bb17309d27",
-    "store": "0x3f2f1ac4ac2c42beace835d818490a99b6a0fa2638b974dab2a1a44364c9387",
-    "oracle_ancillary": "0x414424d98c4864fc35f3a11f691fe27add52c52ec900948b664a22096248711",
-    "optimistic_oracle_v1": "0x11a402245c2c06ebe43ac9c0cbde9dd6a9ddb688a289d821adb9d4ad2829b19"
+    "finder": "0x4ba27638b17dc8767234dbe3b0d3cdc8bc4671644717657ec20627cf8128707",
+    "address_whitelist": "0x27d49056c8f4aec043db0f075d8ce05ee8dcb8aee1b676d674a453ada6b608f",
+    "identifier_whitelist": "0x7d2ad92c0e43179268ee3d7992a907e97b913436e757c8045326c305107d1ce",
+    "store": "0x69b62d3fa79095cf6df1c5ddd7dff3a362d5a097f580cbef5988c71dfe770d2",
+    "oracle_ancillary": "0xb7940968024a3f9963968226e07904343ba95f2773dadc2fb98863430f1187",
+    "optimistic_oracle_v1": "0x44ac84b04789b0a2afcdd2eb914f0f9b767a77a95a019ebaadc28d6cacbaeeb"
   },
   "network": "starknet_sepolia"
 }
